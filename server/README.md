@@ -6,8 +6,7 @@ admin dashboard. It is built on FastAPI and uvicorn, with SQLite from the standa
 
 Until 26 September 2026 the server was C# (the `IsleWarden.Server` project). This is a port with the same HTTP API,
 the same SQLite schema and the same settings, checked response by response against the C# server before it
-was removed; the C# code is kept outside the repository in
-`C:\Users\Bao\Projects\IsleWarden-archive\2026-09-26-csharp-server`. A deployment of the C# server can switch
+was removed; the C# code is archived outside this repository. A deployment of the C# server can switch
 to this one with its existing settings and database (see [Moving from the C# server](#moving-from-the-c-server)).
 
 ## Requirements
@@ -27,7 +26,7 @@ python -m venv .venv
 `--dev` also loads `appsettings.Development.json`, which sets the admin key to `iw-local-test`, makes new
 devices wait for approval, and turns the Discord requirement off so players sign in with Steam alone. Open
 http://localhost:5088/admin/ and sign in with that key. The rest of the walkthrough (the launcher's `login`,
-then `play`) is the same as in the main README's quick start.
+then `play`) is in the [main README's quick start](../README.md#quick-start).
 
 ## Running
 
@@ -50,8 +49,8 @@ are resolved against the current directory, as with the C# server.
 
 Exactly as for the C# server: the `IsleWarden` section of `appsettings.json`, overridden by environment
 variables named `IsleWarden__<Key>`, with `__` between nested keys (`IsleWarden__Whitelist__RconPassword`).
-Keys match case-insensitively. The keys and their defaults are listed under *Server settings* in the main
-[README](../README.md#server-settings). An invalid value (for example `HeartbeatSeconds=abc`) stops the server
+Keys match case-insensitively. The keys and their defaults are listed under
+[Server settings](../docs/REFERENCE.md#server-settings) in the reference. An invalid value (for example `HeartbeatSeconds=abc`) stops the server
 at startup with a message naming the key.
 
 Set the secrets through the environment rather than the file:
@@ -108,7 +107,7 @@ WantedBy=multi-user.target
 ```
 
 Then put nginx or Caddy in front with HTTPS, and restrict `/admin/` and `/api/admin/` to your admins. The
-production checklist in the main README applies unchanged.
+[production checklist](../docs/REFERENCE.md#run-the-server) applies unchanged.
 
 ## Moving from the C# server
 

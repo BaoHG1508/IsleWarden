@@ -45,16 +45,18 @@ Toàn bộ solution build sạch (0 cảnh báo/lỗi); 79 test Core + 65 test S
 ## Sau M5 — các tầng phát hiện bổ sung
 - [x] **Nhật ký thực thi** (`ExecutionHistoryScanner` + `PrefetchReader`): đọc thư mục Prefetch của
       Windows để bắt công cụ đã tắt trước khi mở launcher. Lọc theo tên trước khi mở file, giới hạn
-      cửa sổ 7 ngày, cần quyền quản trị — xem mục "Execution history (Prefetch)" trong README.
+      cửa sổ 7 ngày, cần quyền quản trị — xem mục [Execution history (Prefetch)](REFERENCE.md#execution-history-prefetch) trong tài liệu tham khảo.
 - [x] **Trang quản trị** (`dashboard` React+TS+Vite → `server/islewarden_server/static/admin`, truy vấn ở
       `dashboard.py` + `risk.py`): tổng quan, hồ sơ
       người chơi kèm phần mềm bị gắn cờ, tra cứu báo cáo, ban/gỡ ban/thu hồi phiên/theo dõi, nhật ký
       thao tác, dọn báo cáo cũ. Kèm bảng `findings` chuẩn hoá (tra cứu được), `admin_actions`
       (mọi quyết định tra lại được) và `ban_evidence` (nguồn nhãn để về sau đánh giá lại các luật).
 - [x] **Chuyển server sang Python** (26/09/2026): `server/` (FastAPI + SQLite), cùng HTTP API, schema database và
-      cấu hình với bản C#; đã đối chiếu từng response với bản C# trước khi gỡ. Bản C# lưu ngoài repo, ở
-      `C:\Users\Bao\Projects\IsleWarden-archive\2026-09-26-csharp-server`.
-- [ ] Nối `OverlayScanner` vào `Scanner`/`Policy`/`FindingCodes` (hiện đứng riêng, chưa chạy trong lần quét).
+      cấu hình với bản C#; đã đối chiếu từng response với bản C# trước khi gỡ. Bản C# được lưu trữ ngoài repo.
+- [x] **Overlay lạ** (`OverlayScanner` + `WindowSource`, 26/09/2026): cửa sổ của tiến trình khác nằm trên game
+      lúc game đang ở foreground, có style topmost/layered/click-through hoặc giấu khỏi quay màn hình. Đã nối vào
+      `Scanner`, `Policy` (`overlayScan`) và `FindingCodes`; policy mẫu có sẵn allowlist các overlay phổ biến —
+      xem mục [Overlay scan](REFERENCE.md#overlay-scan) trong tài liệu tham khảo.
 
 ## Điều khiển truy cập (theo `docs/ACCESS-CONTROL-REFERENCE.md` §6)
 - [x] Tách các cổng độc lập **thiết bị → ban → thông báo → anti-cheat**; cổng nào chặn thì trả mã riêng

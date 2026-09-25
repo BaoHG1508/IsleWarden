@@ -1,8 +1,8 @@
 # IsleWarden: what a server admin needs to know
 
 You run a *The Isle: EVRIMA* server and you're going to deploy IsleWarden, or fold its code into your
-own setup. This guide covers what matters, in the order you need it. The [README](../README.md) is
-the full reference; this page tells you which parts of it you can't skip.
+own setup. This guide covers what matters, in the order you need it. The [reference](REFERENCE.md)
+has everything in full; this page tells you which parts of it you can't skip.
 
 ## 1. The system in one minute
 
@@ -17,8 +17,8 @@ the full reference; this page tells you which parts of it you can't skip.
 
 A player gets in like this:
 
-1. They join your Discord server and **you give them the play role**. That role is your whitelist
-   decision. There are no invite codes.
+1. They join your Discord server and **you give them the play role**. That role is how you decide
+   who may play. There are no invite codes.
 2. They run `IsleWarden.Agent login` once. The browser opens: Steam sign-in, then Discord sign-in.
    The server checks the role and gives the launcher a device key.
 3. Each time they play, they run `IsleWarden.Agent play --launch` and keep it open. The server checks
@@ -37,14 +37,14 @@ Do these in order. Each item links to the details.
 
 | # | Task | Details |
 |---|---|---|
-| 1 | Set up `Game.ini`: `bServerWhitelist=true` and RCON on, in the **right sections** (a key in the wrong one is silently ignored). Put staff Steam IDs in `WhitelistIDs=` so they can always get in. Firewall the RCON port. | README → [Connecting to an EVRIMA server](../README.md#connecting-to-an-evrima-server) |
-| 2 | Create the Discord application, invite its bot, copy the server ID and the play role's ID. | README → [Set up Discord login](../README.md#set-up-discord-login) |
-| 3 | Set the server settings, with secrets in environment variables: `PublicUrl`, `AdminKey`, `FingerprintPepper`, `Whitelist.*` (mode `rcon`), `Discord.*`. | README → [Server settings](../README.md#server-settings) |
-| 4 | Put the server behind HTTPS. Restrict `/admin/` and `/api/admin/` to admin IPs or behind extra auth. | README → [Run the server](../README.md#run-the-server) |
-| 5 | Edit `server-policy.json`: keep `mode: "observe"`, write the `disclosure` for *your* players and in their language, choose the blocked tools. | README → [Policy](../README.md#policy) |
-| 6 | Build a release with `build-release.ps1` and code-sign the launcher. | README → [Build a release](../README.md#build-a-release) |
-| 7 | Upload a baseline for the current game build. Repeat after every EVRIMA update. | README → [Baselines](../README.md#baselines-for-each-game-build) |
-| 8 | Run the 13-step real-server test before inviting players. Steps 7, 8, 9 and 13 matter most. | README → [Testing, level 2](../README.md#level-2-a-real-evrima-server) |
+| 1 | Set up `Game.ini`: `bServerWhitelist=true` and RCON on, in the **right sections** (a key in the wrong one is silently ignored). Put staff Steam IDs in `WhitelistIDs=` so they can always get in. Firewall the RCON port. | Reference → [Connecting to an EVRIMA server](REFERENCE.md#connecting-to-an-evrima-server) |
+| 2 | Create the Discord application, invite its bot, copy the server ID and the play role's ID. | Reference → [Set up Discord login](REFERENCE.md#set-up-discord-login) |
+| 3 | Set the server settings, with secrets in environment variables: `PublicUrl`, `AdminKey`, `FingerprintPepper`, `Whitelist.*` (mode `rcon`), `Discord.*`. | Reference → [Server settings](REFERENCE.md#server-settings) |
+| 4 | Put the server behind HTTPS. Restrict `/admin/` and `/api/admin/` to admin IPs or behind extra auth. | Reference → [Run the server](REFERENCE.md#run-the-server) |
+| 5 | Edit `server-policy.json`: keep `mode: "observe"`, write the `disclosure` for *your* players and in their language, choose the blocked tools. | Reference → [Policy](REFERENCE.md#policy) |
+| 6 | Build a release with `build-release.ps1` and code-sign the launcher. | Reference → [Build a release](REFERENCE.md#build-a-release) |
+| 7 | Upload a baseline for the current game build. Repeat after every EVRIMA update. | Reference → [Baselines](REFERENCE.md#baselines-for-each-game-build) |
+| 8 | Run the 13-step real-server test before inviting players. Steps 7, 8, 9 and 13 matter most. | Reference → [Testing, level 2](REFERENCE.md#level-2-a-real-evrima-server) |
 
 ## 3. Decisions you have to make
 
@@ -57,6 +57,7 @@ Do these in order. Each item links to the details.
 | `Whitelist.KickOnRevoke` | `false` until test steps 8–9 pass | The RCON kick opcode (`0x30`) is not verified on a real server. |
 | `FingerprintPepper` | Long random value, set once | Changing it later silently breaks every hardware ban. |
 | `executionHistory` in the policy | Off at first | Needs admin rights on the player's PC and must be in the disclosure. |
+| `overlayScan` in the policy | On, at `medium`, with the example allowlist | During `observe`, check `foreign-overlay` on the dashboard and add legitimate overlays your players use to `allowedProcesses`. |
 | `Discord.WebhookUrl` | A staff-only channel | Alerts for findings, blocked bans, revoked leases, devices needing review. |
 
 ## 4. Where things live in the code
