@@ -1,0 +1,4 @@
+-r requirements.txt
+pytest~=9.1
+# Starlette's TestClient runs on httpx2; with the older httpx it only warns.
+httpx2~=2.13

@@ -1,0 +1,102 @@
+{
+  "mode": "observe",
+  "intervalSeconds": 30,
+  "disclosureVersion": "iw-v2",
+  "disclosure": "Server này dùng launcher chống gian lận. Khi bạn chơi trên server, launcher sẽ: (1) gửi về server danh sách TÊN các phần mềm đang chạy trên máy bạn; (2) kiểm tra xem có công cụ gian lận đã biết trong một số thư mục (Downloads, Desktop, Temp, thư mục game) hay không, bằng cách so tên file với danh sách cố định; (3) kiểm tra tính toàn vẹn của các file game; (4) gửi một mã định danh máy đã băm để chống lách ban. Launcher KHÔNG mở hay đọc nội dung file cá nhân của bạn, không chụp màn hình, không ghi lại bàn phím, không đọc lịch sử duyệt web. Bạn đồng ý việc này khi chơi trên server.",
+  "gameProcessName": "TheIsleClient-Win64-Shipping",
+  "steamAppId": "376210",
+  "launchUri": "steam://rungameid/376210",
+  "blockedProcesses": [
+    { "name": "cheatengine-x86_64", "reason": "Cheat Engine", "severity": "high" },
+    { "name": "cheatengine-i386", "reason": "Cheat Engine", "severity": "high" },
+    { "name": "artmoney", "reason": "ArtMoney memory editor", "severity": "high" },
+    { "name": "xenos64", "reason": "Xenos DLL injector", "severity": "high" },
+    { "name": "extremeinjector", "reason": "Extreme Injector", "severity": "high" },
+    { "name": "x64dbg", "reason": "Debugger (dung chung, xem xet)", "severity": "medium" }
+  ],
+  "protectedFiles": [
+    {
+      "path": "{GameDir}\\TheIsle.exe",
+      "requireSignature": true,
+      "expectedSigner": "EasyAntiCheat Oy"
+    }
+  ],
+  "startupOrder": {
+    "enabled": true,
+    "severity": "medium",
+    "toleranceSeconds": 5
+  },
+  "moduleScan": {
+    "enabled": false,
+    "suspiciousPaths": [ "%TEMP%", "\\Downloads\\" ],
+    "suspiciousSeverity": "medium",
+    "blockedModules": []
+  },
+  "baseline": {
+    "path": "baselines/{BuildId}.json",
+    "severity": "high",
+    "reportUnexpectedFiles": true,
+    "maxHashMegabytesPerScan": 512
+  },
+
+  "fileScan": {
+    "enabled": true,
+    "maxDepth": 2,
+    "maxFilesExamined": 20000,
+    "timeoutSeconds": 5,
+    "directories": [ "{Downloads}", "{Desktop}", "{Temp}", "{GameDir}" ],
+    "files": [
+      { "name": "IsleUnlocker.exe", "reason": "Isle Unlocker", "severity": "medium" },
+      { "name": "GatewayInteractiveMap.exe", "reason": "Ban do tuong tac ngoai game", "severity": "medium" },
+      { "name": "cheatengine-x86_64.exe", "reason": "Cheat Engine", "severity": "medium" },
+      { "name": "artmoney.exe", "reason": "ArtMoney", "severity": "medium" },
+      { "name": "xenos64.exe", "reason": "Xenos DLL injector", "severity": "medium" },
+      { "name": "ExtremeInjector.exe", "reason": "Extreme Injector", "severity": "medium" }
+    ]
+  },
+
+  // Windows execution history (the Prefetch folder): catches cheat tools that were closed before the launcher started.
+  // Readable only when the launcher runs as administrator; otherwise it reports execution-history-unavailable (info).
+  // Before enabling it, add a matching sentence to "disclosure" and bump "disclosureVersion" (e.g. iw-v3):
+  // this is the program-run history of the player's machine. See "Execution history" in README.md.
+  "executionHistory": {
+    "enabled": false,
+    "lookbackDays": 7,
+    "maxFilesExamined": 4096,
+    "timeoutSeconds": 5,
+    "reportPrefetchDisabled": true,
+    "minKeywordLength": 4,
+    "allow": [ "TrainerRoad.exe" ],
+    "programs": [
+      { "name": "IsleUnlocker.exe", "reason": "Isle Unlocker", "severity": "medium" },
+      { "name": "GatewayInteractiveMap.exe", "reason": "Ban do tuong tac ngoai game", "severity": "medium" },
+      { "name": "cheatengine-x86_64.exe", "reason": "Cheat Engine", "severity": "medium" },
+      { "name": "artmoney.exe", "reason": "ArtMoney", "severity": "medium" },
+      { "name": "xenos64.exe", "reason": "Xenos DLL injector", "severity": "medium" },
+      { "name": "ExtremeInjector.exe", "reason": "Extreme Injector", "severity": "medium" },
+      { "name": "kdmapper.exe", "reason": "Nap driver khong ky", "severity": "high" }
+    ],
+    "keywords": [
+      { "keyword": "aimbot", "reason": "Ten goi y aimbot", "severity": "low" },
+      { "keyword": "injector", "reason": "Cong cu tiem DLL", "severity": "low" },
+      { "keyword": "spoofer", "reason": "Cong cu gia mao HWID", "severity": "low" }
+    ]
+  },
+
+  "processInventory": {
+    "reportRunningProcesses": true,
+    "minKeywordLength": 4,
+    "allow": [ "esptool", "Trainerroad", "PDF Unlocker" ],
+    "keywords": [
+      { "keyword": "aimbot", "reason": "Ten goi y aimbot", "severity": "medium" },
+      { "keyword": "wallhack", "reason": "Ten goi y wallhack", "severity": "medium" },
+      { "keyword": "spoofer", "reason": "Cong cu gia mao HWID", "severity": "medium" },
+      { "keyword": "injector", "reason": "Cong cu tiem DLL", "severity": "medium" },
+      { "keyword": "cheatengine", "reason": "Cheat Engine", "severity": "medium" },
+      { "keyword": "unlocker", "reason": "Cong cu mo khoa noi dung", "severity": "low" },
+      { "keyword": "trainer", "reason": "Trainer game", "severity": "low" },
+      { "keyword": "exploit", "reason": "Ten goi y exploit", "severity": "low" },
+      { "keyword": "bypass", "reason": "Ten goi y bypass", "severity": "low" }
+    ]
+  }
+}

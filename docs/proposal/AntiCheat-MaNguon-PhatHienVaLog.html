@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Anti-cheat The Isle EVRIMA — Phát hiện gian lận và ghi log</title>
+<style>
+  @page {
+    size: A4;
+    margin: 16mm 16mm 17mm 16mm;
+    @bottom-left {
+      content: "Anti-cheat The Isle EVRIMA · Phát hiện gian lận và ghi log";
+      font-family: "Segoe UI", sans-serif; font-size: 7.5pt; color: #8A97A5;
+    }
+    @bottom-right {
+      content: "Trang " counter(page) " / " counter(pages);
+      font-family: "Segoe UI", sans-serif; font-size: 7.5pt; color: #8A97A5;
+    }
+  }
+  @page :first {
+    margin: 0;
+    @bottom-left { content: none; }
+    @bottom-right { content: none; }
+  }
+
+  :root {
+    --ink: #16212C;
+    --ink-2: #34424F;
+    --muted: #677786;
+    --line: #DCE3EA;
+    --soft: #F3F6F9;
+    --navy: #0B2A3A;
+    --brand: #0F5B6B;
+    --brand-2: #127C8C;
+    --brand-soft: #E6F2F4;
+    --ok: #2F8F5B;
+    --ok-soft: #E7F4EC;
+    --warn: #C98A0B;
+    --warn-ink: #8F6300;
+    --warn-soft: #FBF3E2;
+    --danger: #B83A2E;
+    --danger-soft: #F9E9E7;
+    --crit: #7E1D14;
+    --crit-soft: #F1D9D5;
+    --plan: #4A6FA5;
+    --plan-soft: #EAF0F8;
+    --gray: #8A98A6;
+    --font: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+    --font-display: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+    --mono: "Cascadia Mono", Consolas, monospace;
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: var(--font);
+    font-size: 10pt;
+    line-height: 1.55;
+    color: var(--ink);
+    background: #fff;
+  }
+
+  h1 {
+    font-family: var(--font-display);
+    font-size: 18.5pt;
+    font-weight: 700;
+    color: var(--navy);
+    letter-spacing: -0.2pt;
+    line-height: 1.25;
+    margin: 0 0 10pt;
+    padding-bottom: 7pt;
+    border-bottom: 1.2pt solid var(--line);
+    display: flex;
+    align-items: center;
+    gap: 9pt;
+    break-after: avoid;
+  }
+  h1 .num {
+    font-size: 10pt;
+    font-weight: 700;
+    color: var(--brand);
+    background: var(--brand-soft);
+    padding: 2pt 7pt;
+    border-radius: 5pt;
+    letter-spacing: 0.5pt;
+  }
+  h2 {
+    font-family: var(--font-display);
+    font-size: 12.5pt;
+    font-weight: 650;
+    color: var(--navy);
+    margin: 13pt 0 5pt;
+    break-after: avoid;
+  }
+  h3 {
+    font-size: 10.3pt;
+    font-weight: 700;
+    color: var(--navy);
+    margin: 10pt 0 4pt;
+    break-after: avoid;
+  }
+  p { margin: 0 0 7pt; orphans: 3; widows: 3; }
+  .lead { font-size: 10.8pt; line-height: 1.6; color: var(--ink-2); }
+  .muted { color: var(--muted); }
+  .small { font-size: 8.8pt; }
+  b, strong { font-weight: 650; color: var(--navy); }
+  ul, ol { margin: 0 0 8pt; padding-left: 16pt; }
+  li { margin: 0 0 3pt; }
+  section { margin-bottom: 14pt; }
+  .pb { break-before: page; }
+  .keep { break-inside: avoid; }
+
+  code, .mono { font-family: var(--mono); font-size: 0.86em; }
+  code { color: var(--ink-2); }
+  .fc {
+    font-family: var(--mono);
+    font-size: 7.9pt;
+    background: var(--soft);
+    border: 1px solid var(--line);
+    padding: 0.3pt 4.5pt;
+    border-radius: 4pt;
+    white-space: nowrap;
+    color: var(--ink-2);
+  }
+
+  .sev {
+    display: inline-block;
+    font-size: 7pt;
+    font-weight: 700;
+    padding: 0.8pt 6pt;
+    border-radius: 10pt;
+    text-transform: uppercase;
+    letter-spacing: 0.4pt;
+    white-space: nowrap;
+    vertical-align: 1pt;
+  }
+  .sev.info { background: var(--soft); color: var(--muted); border: 1px solid var(--line); }
+  .sev.low { background: var(--plan-soft); color: var(--plan); }
+  .sev.medium { background: var(--warn-soft); color: var(--warn-ink); }
+  .sev.high { background: var(--danger-soft); color: var(--danger); }
+  .sev.critical { background: var(--crit-soft); color: var(--crit); }
+
+  .pill {
+    display: inline-block;
+    font-size: 7.3pt;
+    font-weight: 700;
+    padding: 1.2pt 7pt;
+    border-radius: 10pt;
+    letter-spacing: 0.3pt;
+    white-space: nowrap;
+  }
+  .pill.ok { background: var(--ok-soft); color: var(--ok); }
+  .pill.off { background: var(--soft); color: var(--muted); border: 1px solid var(--line); }
+  .pill.plan { background: var(--warn-soft); color: var(--warn-ink); }
+  .pill.no { background: var(--danger-soft); color: var(--danger); }
+
+  table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 9pt;
+    line-height: 1.45;
+    margin: 6pt 0 11pt;
+  }
+  thead th {
+    background: var(--navy);
+    color: #fff;
+    text-align: left;
+    font-weight: 600;
+    font-size: 8.4pt;
+    padding: 5pt 8pt;
+    letter-spacing: 0.2pt;
+  }
+  thead th:first-child { border-top-left-radius: 6pt; }
+  thead th:last-child { border-top-right-radius: 6pt; }
+  tbody td {
+    padding: 4.6pt 8pt;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+  }
+  tbody tr:nth-child(even) td { background: #F8FAFC; }
+  tr { break-inside: avoid; }
+  td.nowrap, th.nowrap { white-space: nowrap; }
+  td .sub { display: block; color: var(--muted); font-size: 8.2pt; }
+  tr.grp { break-after: avoid; page-break-after: avoid; }
+  tr.grp td {
+    background: var(--brand-soft) !important;
+    color: var(--brand);
+    font-weight: 700;
+    font-size: 7.8pt;
+    letter-spacing: 0.8pt;
+    text-transform: uppercase;
+    padding: 3.5pt 8pt;
+  }
+
+  table.kv { margin: 4pt 0 8pt; font-size: 9.1pt; }
+  table.kv th {
+    width: 19%;
+    text-align: left;
+    vertical-align: top;
+    background: var(--soft);
+    color: var(--navy);
+    font-weight: 650;
+    font-size: 8.6pt;
+    padding: 5pt 8pt;
+    border-bottom: 1px solid #fff;
+  }
+  table.kv tr:first-child th { border-top-left-radius: 6pt; }
+  table.kv tr:last-child th { border-bottom-left-radius: 6pt; }
+  table.kv td { padding: 5pt 9pt; border-bottom: 1px solid var(--line); background: #fff !important; }
+  table.kv td p { margin: 0 0 4pt; }
+  table.kv td p:last-child { margin: 0; }
+  table.kv ul { margin: 0; padding-left: 13pt; }
+  table.kv li { margin: 0 0 2pt; }
+
+  .mod-h {
+    display: flex;
+    align-items: center;
+    gap: 8pt;
+    margin: 14pt 0 3pt;
+    break-after: avoid;
+  }
+  .mod-h h2 { margin: 0; }
+  .mod-n {
+    font-family: var(--font-display);
+    font-weight: 700;
+    color: var(--brand);
+    font-size: 12.5pt;
+  }
+  .cls {
+    font-family: var(--mono);
+    font-size: 7.9pt;
+    color: var(--brand);
+    background: var(--brand-soft);
+    padding: 1pt 6pt;
+    border-radius: 4pt;
+    white-space: nowrap;
+  }
+  .mod-h .right { margin-left: auto; display: flex; gap: 5pt; align-items: center; }
+  .src { font-size: 8.4pt; color: var(--muted); margin: 1pt 0 4pt; break-after: avoid; }
+  .src code { color: var(--brand); font-size: 0.95em; }
+  .nw { white-space: nowrap; }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 9pt; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9pt; }
+
+  .card {
+    border: 1px solid var(--line);
+    border-radius: 8pt;
+    padding: 9pt 11pt;
+    background: #fff;
+    break-inside: avoid;
+  }
+  .card p { margin: 0 0 4pt; font-size: 9.2pt; color: var(--ink-2); }
+  .card p:last-child { margin: 0; }
+  .card ul { margin: 0; padding-left: 13pt; font-size: 9.2pt; color: var(--ink-2); }
+  .card li { margin-bottom: 2.5pt; }
+  .card-k {
+    font-size: 7.8pt;
+    font-weight: 700;
+    letter-spacing: 1pt;
+    text-transform: uppercase;
+    color: var(--brand);
+    margin-bottom: 4pt;
+  }
+  .card.top-brand { border-top: 3pt solid var(--brand); }
+  .card.top-ok { border-top: 3pt solid var(--ok); }
+  .card.top-gray { border-top: 3pt solid var(--gray); }
+  .card.top-warn { border-top: 3pt solid var(--warn); }
+  .card.top-danger { border-top: 3pt solid var(--danger); }
+
+  .callout {
+    border-left: 3pt solid var(--brand);
+    background: var(--brand-soft);
+    padding: 8pt 12pt;
+    border-radius: 0 8pt 8pt 0;
+    break-inside: avoid;
+    margin: 8pt 0 10pt;
+    font-size: 9.4pt;
+  }
+  .callout p { margin: 0 0 4pt; }
+  .callout p:last-child, .callout ol:last-child, .callout ul:last-child { margin-bottom: 0; }
+  .callout ol, .callout ul { padding-left: 15pt; margin-bottom: 4pt; }
+  .callout.warn { border-color: var(--warn); background: var(--warn-soft); }
+  .callout.gray { border-color: var(--gray); background: var(--soft); }
+  .callout-t {
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 3pt;
+    font-size: 9.8pt;
+  }
+
+  .pr { display: flex; gap: 9pt; }
+  .card.pr { padding: 8pt 10pt; }
+  .pr-n {
+    flex: none;
+    width: 21pt; height: 21pt;
+    border-radius: 6pt;
+    background: var(--brand-soft);
+    color: var(--brand);
+    font-weight: 800;
+    font-size: 10pt;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .pr h4 { margin: 0 0 2pt; font-size: 9.8pt; color: var(--navy); }
+  .pr p { font-size: 8.9pt; line-height: 1.45; }
+
+  .ladder { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6pt; margin: 6pt 0 10pt; }
+  .rung { border-radius: 7pt; padding: 7pt 8pt 8pt; break-inside: avoid; }
+  .rung .sev { margin-bottom: 4pt; }
+  .rung p { margin: 0; font-size: 8.5pt; line-height: 1.42; color: var(--ink-2); }
+  .rung.info { background: var(--soft); }
+  .rung.low { background: var(--plan-soft); }
+  .rung.medium { background: var(--warn-soft); }
+  .rung.high { background: var(--danger-soft); }
+  .rung.critical { background: var(--crit-soft); }
+
+  figure { margin: 6pt 0 10pt; break-inside: avoid; }
+  figure svg { width: 100%; height: auto; display: block; }
+  figcaption { font-size: 8.4pt; color: var(--muted); margin-top: 6pt; line-height: 1.45; }
+  figcaption b { color: var(--ink-2); }
+
+  svg text { font-family: var(--font); }
+  .zl { font-size: 9.5px; font-weight: 700; letter-spacing: 1.2px; fill: #6B7B8A; }
+  .t1 { font-size: 13px; font-weight: 700; fill: #0B2A3A; }
+  .t2 { font-size: 11px; fill: #34424F; }
+  .t2b { font-size: 11px; font-weight: 700; fill: #0F5B6B; }
+  .t3 { font-size: 10.3px; fill: #677786; }
+  .t3i { font-size: 10px; fill: #677786; font-style: italic; }
+  .tm { font-size: 9.6px; fill: #34424F; font-family: var(--mono); }
+  .tmb { font-size: 11px; font-weight: 700; fill: #0B2A3A; font-family: var(--mono); }
+  .tmd { font-size: 9.8px; font-weight: 600; fill: #0B2A3A; font-family: var(--mono); }
+  .bt { font-size: 9px; font-weight: 700; fill: #fff; text-anchor: middle; }
+  .hd { font-size: 10.5px; font-weight: 700; fill: #fff; text-anchor: middle; }
+  .ml { font-size: 10.6px; fill: #22303C; text-anchor: middle; }
+  .nb { font-weight: 700; fill: #0F5B6B; }
+
+  pre.code {
+    font-family: var(--mono);
+    font-size: 7.9pt;
+    line-height: 1.45;
+    background: #F6F8FA;
+    border: 1px solid var(--line);
+    color: #22303C;
+    padding: 7pt 10pt;
+    border-radius: 7pt;
+    white-space: pre-wrap;
+    word-break: break-word;
+    margin: 3pt 0 9pt;
+    break-inside: avoid;
+  }
+  pre.code.term { background: #0F1A24; border-color: #0F1A24; color: #D5E2EC; }
+  pre.code.term .dim { color: #7F93A5; }
+  pre.code.term .hi { color: #FF9B8F; }
+  pre.code.term .md { color: #F2C66D; }
+  pre.code.term .ok { color: #7FD3A2; }
+  .code-label {
+    font-size: 8.3pt;
+    font-weight: 700;
+    color: var(--ink-2);
+    margin-top: 6pt;
+    break-after: avoid;
+  }
+  .jk { color: #0F5B6B; }
+  .js { color: #9A5B13; }
+  .jn { color: #2F7D4F; }
+  .jc { color: #8A97A5; font-style: italic; }
+  .kw { color: #4A57A8; font-weight: 600; }
+
+  .steps { margin: 5pt 0 9pt; border: 1px solid var(--line); border-radius: 8pt; overflow: hidden; break-inside: avoid; }
+  .step {
+    display: grid;
+    grid-template-columns: 20pt 1fr;
+    gap: 9pt;
+    padding: 6pt 11pt;
+    break-inside: avoid;
+  }
+  .step + .step { border-top: 1px solid var(--line); }
+  .step-n {
+    width: 18pt; height: 18pt;
+    border-radius: 50%;
+    background: var(--brand);
+    color: #fff;
+    font-weight: 700;
+    font-size: 8.8pt;
+    display: flex; align-items: center; justify-content: center;
+    margin-top: 1pt;
+  }
+  .step h4 { margin: 0 0 1.5pt; font-size: 9.6pt; color: var(--navy); font-weight: 700; }
+  .step p { margin: 0; font-size: 9pt; color: var(--ink-2); line-height: 1.48; }
+
+  .cover {
+    width: 210mm;
+    height: 296.5mm;
+    position: relative;
+    overflow: hidden;
+    break-after: page;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+  }
+  .cover-band {
+    position: relative;
+    background: linear-gradient(140deg, #0A2533 0%, #0E4757 52%, #137F8E 100%);
+    color: #fff;
+    padding: 20mm 20mm 17mm;
+    height: 156mm;
+    overflow: hidden;
+  }
+  .cover-shield { position: absolute; right: -16mm; top: 14mm; width: 118mm; height: auto; opacity: 0.10; }
+  .brand { display: flex; align-items: center; gap: 8pt; }
+  .brand svg { width: 22pt; height: 22pt; }
+  .eyebrow {
+    margin-top: 38mm;
+    font-size: 8.8pt;
+    letter-spacing: 1.8pt;
+    text-transform: uppercase;
+    color: #A8DCE3;
+    font-weight: 600;
+  }
+  .cover-title {
+    font-family: var(--font-display);
+    font-size: 31pt;
+    line-height: 1.14;
+    font-weight: 700;
+    letter-spacing: -0.4pt;
+    margin: 7pt 0 11pt;
+    color: #fff;
+  }
+  .cover-lead { font-size: 11.6pt; line-height: 1.5; color: #D3E9EE; max-width: 140mm; margin: 0; }
+  .cover-body {
+    flex: 1;
+    padding: 13mm 20mm 0;
+    display: grid;
+    grid-template-columns: 0.85fr 1.15fr;
+    gap: 13mm;
+  }
+  .meta { display: flex; flex-direction: column; gap: 10pt; }
+  .meta .k { display: block; font-size: 7.8pt; letter-spacing: 1pt; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  .meta .v { display: block; font-size: 10.3pt; color: var(--navy); font-weight: 600; margin-top: 1pt; }
+  .toc-t { font-size: 7.8pt; letter-spacing: 1pt; text-transform: uppercase; color: var(--muted); font-weight: 600; margin-bottom: 5pt; }
+  .toc ol { list-style: none; padding: 0; margin: 0; counter-reset: toc; }
+  .toc li {
+    counter-increment: toc;
+    display: flex; gap: 8pt;
+    padding: 3pt 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 9.5pt;
+    margin: 0;
+  }
+  .toc li::before {
+    content: counter(toc, decimal-leading-zero);
+    color: var(--brand); font-weight: 700; width: 16pt; flex: none;
+  }
+  .toc a { color: var(--ink); text-decoration: none; }
+  .cover-foot {
+    padding: 0 20mm 12mm;
+    font-size: 8pt;
+    color: var(--muted);
+  }
+  .cover-foot div { border-top: 1px solid var(--line); padding-top: 7pt; }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <div class="cover-band">
+    <svg class="cover-shield" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 1.6 20.6 4.9v6.3c0 5.6-3.6 9.9-8.6 11.3-5-1.4-8.6-5.7-8.6-11.3V4.9Z" fill="#fff"/>
+    </svg>
+    <div class="brand">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 1.6 20.6 4.9v6.3c0 5.6-3.6 9.9-8.6 11.3-5-1.4-8.6-5.7-8.6-11.3V4.9Z" fill="none" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/>
+        <circle cx="11" cy="10.6" r="3.3" fill="none" stroke="#7FD3DD" stroke-width="1.6"/>
+        <path d="M13.4 13 15.8 15.4" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="eyebrow">Tài liệu source code · Anti-cheat cho server The Isle EVRIMA</div>
+    <div class="cover-title">Phát hiện gian lận<br>và ghi log</div>
+    <p class="cover-lead">Phần lõi của anti-cheat: tìm gì trên máy người chơi, tìm bằng cách nào, và mỗi finding được ghi thành log ra sao. Kèm luồng đăng nhập Steam + Discord trước khi người chơi được cấp quyền vào server.</p>
+  </div>
+
+  <div class="cover-body">
+    <div class="meta">
+      <div><span class="k">Phiên bản tài liệu</span><span class="v">1.0</span></div>
+      <div><span class="k">Ngày lập</span><span class="v">26/09/2026</span></div>
+      <div><span class="k">Nền tảng</span><span class="v">.NET 10 · C# · Windows 10/11</span></div>
+    </div>
+    <div class="toc">
+      <div class="toc-t">Nội dung</div>
+      <ol>
+        <li><a href="#s1">Phạm vi và cấu trúc source code</a></li>
+        <li><a href="#s2">Kiến trúc Scanner</a></li>
+        <li><a href="#s3">Phát hiện qua tiến trình</a></li>
+        <li><a href="#s4">Phát hiện qua file game</a></li>
+        <li><a href="#s5">Dấu vết công cụ trên máy</a></li>
+        <li><a href="#s6">Overlay lạ và HWID</a></li>
+        <li><a href="#s7">Finding code, severity, observe/enforce</a></li>
+        <li><a href="#s8">Ghi log: từ finding đến bằng chứng</a></li>
+        <li><a href="#s9">Đăng nhập Steam + Discord, cấp quyền vào server</a></li>
+        <li><a href="#s10">Wall-hack: module nào bắt được</a></li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="cover-foot"><div>Tài liệu đi kèm source code · Tập trung vào phần phát hiện và ghi log; hạ tầng server, whitelist, dashboard và UI launcher chỉ được nhắc tới khi cần.</div></div>
+</div>
+
+<section>
+  <h1 id="s1"><span class="num">01</span>Phạm vi và cấu trúc source code</h1>
+
+  <div class="grid2" style="margin: 10pt 0 12pt;">
+    <div class="card top-brand">
+      <div class="card-k">Tài liệu đi sâu</div>
+      <ul>
+        <li><b>Thư viện phát hiện</b>: 9 module quét, cấu hình hoàn toàn bằng một file policy JSON.</li>
+        <li><b>Log</b>: mỗi finding có code, severity và bằng chứng; scan report; log lưu ở đâu và đọc thế nào.</li>
+        <li><b>HWID</b> và <b>đăng nhập Steam + Discord</b> trước khi cấp quyền vào server.</li>
+      </ul>
+    </div>
+    <div class="card top-gray">
+      <div class="card-k" style="color: var(--muted);">Chỉ nhắc qua</div>
+      <ul>
+        <li>Hạ tầng server: đồng bộ whitelist qua RCON/file, hết hạn lease, admin API.</li>
+        <li>Admin dashboard, UI và đóng gói launcher.</li>
+        <li>Phần phát hiện không phụ thuộc vào các phần trên: input là một policy JSON, output là một report JSON, nên gắn được vào launcher hay server có sẵn.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>Cấu trúc source code</h2>
+  <p>Toàn bộ module phát hiện nằm trong thư mục <code>launcher/IsleWarden.Core/</code>. Bảng dưới liệt kê theo tên file trong thư mục đó.</p>
+  <table>
+    <thead><tr><th style="width: 38%;">File</th><th>Vai trò</th></tr></thead>
+    <tbody>
+      <tr class="grp"><td colspan="2">Điều phối</td></tr>
+      <tr><td><code>Scanner.cs</code></td><td>Chạy mọi module đã bật trong một lần quét, gom kết quả thành report.</td></tr>
+      <tr><td><code>Policy.cs</code></td><td>Định nghĩa policy: danh sách cấm, từ khoá, bật/tắt từng module, severity, chế độ observe/enforce.</td></tr>
+      <tr><td><code>ScanContext.cs</code> · <code>SteamLocator.cs</code> · <code>VdfParser.cs</code></td><td>Tìm thư mục cài game và build ID qua Steam (registry → <code>libraryfolders.vdf</code> → <code>appmanifest_376210.acf</code>).</td></tr>
+      <tr><td><code>FileHashCache.cs</code> · <code>PathTemplate.cs</code></td><td>Cache SHA-256 theo kích thước + thời điểm sửa file; thay <code>{GameDir}</code> và biến môi trường trong đường dẫn.</td></tr>
+      <tr class="grp"><td colspan="2">Module phát hiện</td></tr>
+      <tr><td><code>ProcessScanner.cs</code> · <code>ProcessSource.cs</code></td><td>Tiến trình bị cấm đang chạy (mục 3.1).</td></tr>
+      <tr><td><code>ProcessInventoryScanner.cs</code></td><td>Tên tiến trình chứa từ khoá đáng ngờ (3.2).</td></tr>
+      <tr><td><code>ModuleScanner.cs</code> · <code>ModuleSource.cs</code></td><td>DLL nạp vào tiến trình game (3.3).</td></tr>
+      <tr><td><code>StartupOrderChecker.cs</code></td><td>Game được mở trước launcher (3.4).</td></tr>
+      <tr><td><code>FileIntegrityChecker.cs</code> · <code>AuthenticodeVerifier.cs</code></td><td>Hash và chữ ký số của các file được bảo vệ (4.1).</td></tr>
+      <tr><td><code>Baseline.cs</code> · <code>BaselineChecker.cs</code></td><td>So toàn bộ file game với baseline của đúng bản build (4.2).</td></tr>
+      <tr><td><code>FileScanner.cs</code></td><td>File công cụ gian lận nằm trên ổ đĩa (5.1).</td></tr>
+      <tr><td><code>ExecutionHistoryScanner.cs</code> · <code>PrefetchReader.cs</code></td><td>Prefetch — lịch sử chạy chương trình của Windows (5.2).</td></tr>
+      <tr><td><code>OverlayScanner.cs</code></td><td>Cửa sổ lạ phủ lên game (6.1) — đã viết, chưa nối vào Scanner.</td></tr>
+      <tr><td><code>DeviceFingerprint.cs</code> · <code>WmiIdentifiers.cs</code></td><td>HWID để ban theo máy (6.2).</td></tr>
+      <tr class="grp"><td colspan="2">Log và giao thức</td></tr>
+      <tr><td><code>Finding.cs</code> · <code>FindingCodes.cs</code> · <code>Severity.cs</code> · <code>ScanReport.cs</code></td><td>Finding, danh sách finding code, severity, scan report (mục 07–08).</td></tr>
+      <tr><td><code>IsleWardenJson.cs</code></td><td>JSON dùng chung: camelCase, enum dạng string, giữ nguyên tiếng Việt.</td></tr>
+      <tr><td><code>Protocol/Login.cs</code> · <code>Protocol/Access.cs</code></td><td>PKCE, code lỗi đăng nhập, các gate và code chặn (mục 09).</td></tr>
+    </tbody>
+  </table>
+  <p class="small muted">Phía server (Python, thư mục <code>server/islewarden_server/</code>): log nằm ở <code>records.py</code> + <code>db.py</code> (bảng <code>reports</code>, <code>findings</code>), <code>risk.py</code>, <code>discord.py</code>; đăng nhập ở <code>login/</code> (<code>steam.py</code>, <code>discord_api.py</code>, <code>discord_gate.py</code>, <code>pending.py</code>, <code>service.py</code>). Phía launcher: <code>LoginCommand.cs</code>, <code>LoopbackListener.cs</code> trong <code>launcher/IsleWarden.Agent/</code>.</p>
+
+  <h2>Build, test và chạy thử</h2>
+  <div class="grid2">
+    <div>
+      <div class="code-label">Build và chạy test của phần phát hiện</div>
+<pre class="code">dotnet build launcher/IsleWarden.slnx
+dotnet test launcher/IsleWarden.Core.Tests</pre>
+    </div>
+    <div>
+      <div class="code-label">Quét thử máy này, không cần server</div>
+<pre class="code">IsleWarden.Agent.exe scan policy.json --once
+<span class="jc"># in report JSON; exit code:</span>
+<span class="jc"># 0 = sạch · 1 = có finding · 2 = lỗi policy</span></pre>
+    </div>
+  </div>
+  <p class="small">Yêu cầu: .NET SDK 10 cho launcher và thư viện phát hiện; server là Python ≥ 3.10. Mọi API chỉ có trên Windows (Registry, WinVerifyTrust, WMI, Prefetch) đều được bọc bằng <code>OperatingSystem.IsWindows()</code>. Phía người chơi cần Windows 10/11 x64 và <b>không cần quyền admin</b>, trừ module Prefetch.</p>
+  <p class="small">“Policy mẫu” nhắc tới trong tài liệu là <code>config/server-policy.example.json</code> — bản server gửi cho launcher; <code>config/policy.example.json</code> là bản rút gọn để quét local.</p>
+</section>
+
+<section>
+  <h1 id="s2"><span class="num">02</span>Kiến trúc Scanner</h1>
+  <p class="lead">Mọi module đều làm theo một kiểu: nhận policy, kiểm tra máy, trả ra danh sách <code>Finding</code>. Không module nào tự chặn người chơi — chặn hay không do chế độ observe/enforce và ngưỡng severity quyết định (mục 07).</p>
+
+  <figure>
+    <svg viewBox="0 0 760 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Luồng một lần quét">
+      <defs>
+        <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#6B7B8A"/>
+        </marker>
+      </defs>
+
+      <text class="zl" x="0" y="14">ĐẦU VÀO</text>
+      <rect x="0" y="24" width="186" height="92" rx="8" fill="#fff" stroke="#DCE3EA" stroke-width="1.2"/>
+      <text class="tmb" x="14" y="48">policy.json</text>
+      <text class="t3" x="14" y="68">danh sách cấm, từ khoá,</text>
+      <text class="t3" x="14" y="84">bật/tắt module, severity,</text>
+      <text class="t3" x="14" y="100">observe / enforce</text>
+
+      <rect x="0" y="132" width="186" height="152" rx="8" fill="#fff" stroke="#DCE3EA" stroke-width="1.2"/>
+      <text class="tmb" x="14" y="156">ScanContext</text>
+      <text class="t2" x="14" y="176">Tìm game qua Steam:</text>
+      <text class="tm" x="14" y="194">HKCU\…\Valve\Steam</text>
+      <text class="tm" x="14" y="210">libraryfolders.vdf</text>
+      <text class="tm" x="14" y="226">appmanifest_376210.acf</text>
+      <text class="t3" x="14" y="248">→ thư mục game + build ID</text>
+      <text class="t3" x="14" y="266">→ baseline đúng bản build</text>
+
+      <text class="zl" x="212" y="14">MỘT LẦN QUÉT</text>
+      <rect x="212" y="24" width="342" height="260" rx="10" fill="#F3F6F9" stroke="#DCE3EA" stroke-width="1.2"/>
+      <text class="tmb" x="228" y="48">Scanner.Run(policy, context)</text>
+
+      <g>
+        <rect x="224" y="60" width="318" height="21" rx="5" fill="#fff" stroke="#D5DEE7"/>
+        <circle cx="236" cy="70.5" r="7" fill="#0F5B6B"/><text class="bt" x="236" y="73.6">1</text>
+        <text class="tmd" x="250" y="74.2">ProcessScanner</text><text class="t3" x="400" y="74.2">tiến trình bị cấm</text>
+
+        <rect x="224" y="85" width="318" height="21" rx="5" fill="#fff" stroke="#D5DEE7"/>
+        <circle cx="236" cy="95.5" r="7" fill="#0F5B6B"/><text class="bt" x="236" y="98.6">2</text>
+        <text class="tmd" x="250" y="99.2">FileIntegrityChecker</text><text class="t3" x="400" y="99.2">hash + chữ ký file</text>
+
+        <rect x="224" y="110" width="318" height="21" rx="5" fill="#fff" stroke="#D5DEE7"/>
+        <circle cx="236" cy="120.5" r="7" fill="#0F5B6B"/><text class="bt" x="236" y="123.6">3</text>
+        <text class="tmd" x="250" y="124.2">StartupOrderChecker</text><text class="t3" x="400" y="124.2">game mở trước launcher</text>
+
+        <rect x="224" y="135" width="318" height="21" rx="5" fill="#fff" stroke="#D5DEE7"/>
+        <circle cx="236" cy="145.5" r="7" fill="#0F5B6B"/><text class="bt" x="236" y="148.6">4</text>
+        <text class="tmd" x="250" y="149.2">ModuleScanner</text><text class="t3" x="400" y="149.2">DLL trong game</text>
+
+        <rect x="224" y="160" width="318" height="21" rx="5" fill="#fff" stroke="#D5DEE7"/>
+        <circle cx="236" cy="170.5" r="7" fill="#0F5B6B"/><text class="bt" x="236" y="173.6">5</text>
+        <text class="tmd" x="250" y="174.2">BaselineChecker</text><text class="t3" x="400" y="174.2">file game vs baseline</text>
+
+        <rect x="224" y="185" width="318" height="21" rx="5" fill="#fff" stroke="#D5DEE7"/>
+        <circle cx="236" cy="195.5" r="7" fill="#0F5B6B"/><text class="bt" x="236" y="198.6">6</text>
+        <text class="tmd" x="250" y="199.2">FileScanner</text><text class="t3" x="400" y="199.2">công cụ trên ổ đĩa</text>
+
+        <rect x="224" y="210" width="318" height="21" rx="5" fill="#fff" stroke="#D5DEE7"/>
+        <circle cx="236" cy="220.5" r="7" fill="#0F5B6B"/><text class="bt" x="236" y="223.6">7</text>
+        <text class="tmd" x="250" y="224.2">ExecutionHistoryScanner</text><text class="t3" x="400" y="224.2">Prefetch</text>
+
+        <rect x="224" y="235" width="318" height="21" rx="5" fill="#fff" stroke="#D5DEE7"/>
+        <circle cx="236" cy="245.5" r="7" fill="#0F5B6B"/><text class="bt" x="236" y="248.6">8</text>
+        <text class="tmd" x="250" y="249.2">ProcessInventoryScanner</text><text class="t3" x="400" y="249.2">từ khoá tên tiến trình</text>
+      </g>
+      <text class="t3i" x="228" y="275">Dùng chung một FileHashCache · OverlayScanner chưa nối vào đây</text>
+
+      <text class="zl" x="584" y="14">ĐẦU RA</text>
+      <rect x="584" y="24" width="176" height="104" rx="8" fill="#fff" stroke="#0F5B6B" stroke-width="1.4"/>
+      <text class="tmb" x="598" y="48">ScanReport</text>
+      <text class="tm" x="598" y="68">timestampUtc · machine</text>
+      <text class="tm" x="598" y="84">clean</text>
+      <text class="tm" x="598" y="100">findings[ ]</text>
+      <text class="tm" x="598" y="116">processes (tuỳ chọn)</text>
+
+      <rect x="608" y="160" width="152" height="46" rx="8" fill="#fff" stroke="#DCE3EA" stroke-width="1.2"/>
+      <text class="t2b" x="620" y="180">Console launcher</text>
+      <text class="t3" x="620" y="196">tóm tắt mỗi lần quét</text>
+
+      <rect x="608" y="222" width="152" height="62" rx="8" fill="#fff" stroke="#DCE3EA" stroke-width="1.2"/>
+      <text class="t2b" x="620" y="242">Server → log (mục 08)</text>
+      <text class="t3" x="620" y="258">khi xin vào server và</text>
+      <text class="t3" x="620" y="274">mỗi heartbeat (30 giây)</text>
+
+      <line x1="186" y1="70" x2="210" y2="70" stroke="#6B7B8A" stroke-width="1.5" marker-end="url(#ar)"/>
+      <line x1="186" y1="208" x2="210" y2="208" stroke="#6B7B8A" stroke-width="1.5" marker-end="url(#ar)"/>
+      <line x1="554" y1="76" x2="582" y2="76" stroke="#6B7B8A" stroke-width="1.5" marker-end="url(#ar)"/>
+      <path d="M594 128 V253" fill="none" stroke="#6B7B8A" stroke-width="1.5"/>
+      <line x1="594" y1="183" x2="606" y2="183" stroke="#6B7B8A" stroke-width="1.5" marker-end="url(#ar)"/>
+      <line x1="594" y1="253" x2="606" y2="253" stroke="#6B7B8A" stroke-width="1.5" marker-end="url(#ar)"/>
+    </svg>
+    <figcaption><b>Hình 1.</b> Một lần quét. Thứ tự các module đúng như trong <code>Scanner.Run</code>; trước module 1, Scanner kiểm tra có tìm được thư mục game không (khi policy cần) và ghi <code>game-not-found</code> nếu không.</figcaption>
+  </figure>
+
+  <h2>Khi nào quét</h2>
+  <p>Launcher quét một lần khi xin vào server (report đi kèm yêu cầu), rồi quét lại ở <b>mỗi heartbeat</b> (mặc định 30 giây) suốt lúc chơi. Một object <code>Scanner</code> được giữ suốt phiên, nên <code>FileHashCache</code> bên trong nó có tác dụng: file game chỉ bị hash ở vài lần quét đầu, các lần sau gần như chỉ đọc thông tin file.</p>
+
+  <h2>Nguyên tắc thiết kế</h2>
+  <div class="grid3" style="margin-bottom: 10pt;">
+    <div class="card pr"><div class="pr-n">1</div><div><h4>Không phán xử</h4><p>Module chỉ trả về finding. Chặn hay không do chế độ + ngưỡng quyết định; đổi rule chỉ cần sửa policy, không phải build lại.</p></div></div>
+    <div class="card pr"><div class="pr-n">2</div><div><h4>Privacy by design</h4><p>Khớp theo tên/hash trước khi đọc bất cứ thứ gì. Thứ không khớp bị bỏ ngay: không ghi, không gửi.</p></div></div>
+    <div class="card pr"><div class="pr-n">3</div><div><h4>Không đoán</h4><p>Không đọc được thì bỏ qua hoặc ghi <code>info</code>, không kết luận. Một con số đoán sai có thể khiến người chơi bị phạt oan.</p></div></div>
+    <div class="card pr"><div class="pr-n">4</div><div><h4>Có giới hạn</h4><p>Giới hạn thời gian, số file và dung lượng hash mỗi lần quét, để không làm giật game.</p></div></div>
+    <div class="card pr"><div class="pr-n">5</div><div><h4>Không can thiệp máy</h4><p>Không tắt, xoá hay sửa gì. Mở tiến trình với quyền tối thiểu; đọc file ở chế độ share để không cản game.</p></div></div>
+  </div>
+
+  <div class="callout">
+    <div class="callout-t">Gắn vào launcher khác</div>
+<pre class="code" style="margin: 4pt 0 5pt; background: #fff;"><span class="kw">var</span> policy  = IsleWardenJson.LoadPolicy(<span class="js">"policy.json"</span>);
+<span class="kw">var</span> context = ScanContext.Resolve(policy, launcherStartedUtc); <span class="jc">// tìm game, build ID</span>
+<span class="kw">var</span> scanner = <span class="kw">new</span> Scanner();                                   <span class="jc">// tạo một lần, dùng cả phiên</span>
+<span class="kw">var</span> report  = scanner.Run(policy, context);                    <span class="jc">// ScanReport → gửi đi / ghi log</span></pre>
+    <p>Gọi <code>scanner.Run</code> ở mỗi lần quét để cache hash có tác dụng. <code>launcherStartedUtc</code> là mốc cho module kiểm tra thứ tự khởi động (3.4). Nguồn dữ liệu (tiến trình, module) đi qua interface <code>IProcessSource</code>, <code>IModuleSource</code>, nên test được bằng dữ liệu giả, không cần game.</p>
+  </div>
+</section>
+
+<section class="pb">
+  <h1 id="s3"><span class="num">03</span>Phát hiện qua tiến trình</h1>
+  <p class="lead">Bốn module xem những gì đang chạy: công cụ bị cấm, tên đáng ngờ, DLL lạ trong game, và thứ tự mở game/launcher.</p>
+
+  <div class="mod-h"><span class="mod-n">3.1</span><h2>Tiến trình bị cấm</h2><span class="right"><span class="pill ok">Bật trong policy mẫu</span></span></div>
+  <div class="src">Source code: <code>ProcessScanner.cs</code> · <code>ProcessSource.cs</code></div>
+  <table class="kv">
+    <tr><th>Phát hiện gì</th><td>Tiến trình đang chạy có tên nằm trong <code>blockedProcesses</code> — Cheat Engine, ArtMoney, Xenos, Extreme Injector…</td></tr>
+    <tr><th>Cách làm</th><td>
+      <p>Liệt kê tiến trình, chuẩn hoá tên (bỏ khoảng trắng, chữ thường, bỏ đuôi <code>.exe</code>) rồi so với danh sách.</p>
+      <p>Đường dẫn file lấy bằng <code>OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION)</code> + <code>QueryFullProcessImageNameW</code>: quyền tối thiểu, không đọc bộ nhớ, dùng được cả với tiến trình được bảo vệ hoặc khác 32/64-bit.</p>
+    </td></tr>
+    <tr><th>Tuỳ chọn SHA-256</th><td>Nếu rule có danh sách <code>sha256</code>, chỉ báo khi hash của file thực thi khớp — phần mềm vô hại trùng tên không bị flag. Không đọc được file thì bỏ qua: không có bằng chứng thì không báo.</td></tr>
+    <tr><th>Finding code</th><td><span class="fc">blocked-process</span> — severity theo rule, mặc định <span class="sev high">high</span>. Detail: reason + đường dẫn file.</td></tr>
+  </table>
+<pre class="code"><span class="jk">"blockedProcesses"</span>: [
+  { <span class="jk">"name"</span>: <span class="js">"cheatengine-x86_64"</span>, <span class="jk">"reason"</span>: <span class="js">"Cheat Engine"</span>, <span class="jk">"severity"</span>: <span class="js">"high"</span> },
+  { <span class="jk">"name"</span>: <span class="js">"xenos64"</span>, <span class="jk">"reason"</span>: <span class="js">"Xenos DLL injector"</span>, <span class="jk">"severity"</span>: <span class="js">"high"</span>,
+    <span class="jk">"sha256"</span>: [<span class="js">"&lt;hash của bản đã biết&gt;"</span>] },
+  { <span class="jk">"name"</span>: <span class="js">"x64dbg"</span>, <span class="jk">"reason"</span>: <span class="js">"Debugger, cần xem xét"</span>, <span class="jk">"severity"</span>: <span class="js">"medium"</span> }
+]</pre>
+
+  <div class="mod-h"><span class="mod-n">3.2</span><h2>Từ khoá trong tên tiến trình</h2><span class="right"><span class="pill ok">Bật trong policy mẫu</span></span></div>
+  <div class="src">Source code: <code>ProcessInventoryScanner.cs</code></div>
+  <table class="kv">
+    <tr><th>Phát hiện gì</th><td>Tiến trình có tên chứa từ khoá gợi ý công cụ gian lận (<code>aimbot</code>, <code>wallhack</code>, <code>injector</code>, <code>spoofer</code>…) — bắt được cả công cụ chưa có trong danh sách cấm.</td></tr>
+    <tr><th>Cách làm</th><td>
+      <p>Khớp substring, không phân biệt hoa thường. Từ khoá ngắn hơn <code>minKeywordLength</code> (mặc định 4) bị bỏ vì khớp quá rộng — “esp” sẽ khớp cả “respondus”. Danh sách <code>allow</code> bỏ qua các tên đã biết là vô hại. Mỗi tên chỉ báo một lần dù có nhiều tiến trình trùng tên.</p>
+      <p>Tuỳ chọn <code>reportRunningProcesses</code>: gửi kèm danh sách <b>tên</b> tiến trình đang chạy (trường <code>processes</code> của report) để admin tra cứu. Chỉ tên — không bao giờ gửi đường dẫn, command line (có thể chứa token, mật khẩu) hay tiêu đề cửa sổ.</p>
+    </td></tr>
+    <tr><th>Finding code</th><td><span class="fc">suspicious-process-name</span> — severity theo từ khoá, mặc định <span class="sev low">low</span>; policy mẫu nâng lên <span class="sev medium">medium</span> cho từ khoá mạnh như aimbot, wallhack. Detail: <code>từ khoá “aimbot”: lý do</code>.</td></tr>
+    <tr><th>Chống báo nhầm</th><td>Từ khoá chỉ là heuristic: nhiều phần mềm hợp lệ có “trainer”, “unlocker”, “inject” trong tên. Để severity low/medium cho admin xem; đừng đặt cao tới mức tự chặn.</td></tr>
+  </table>
+
+  <div class="mod-h"><span class="mod-n">3.3</span><h2>DLL nạp vào tiến trình game</h2><span class="right"><span class="pill off">Tắt mặc định</span></span></div>
+  <div class="src">Source code: <code>ModuleScanner.cs</code> · <code>ModuleSource.cs</code></div>
+  <table class="kv">
+    <tr><th>Phát hiện gì</th><td>DLL bị cấm, hoặc DLL nạp từ thư mục đáng ngờ (<code>%TEMP%</code>, <code>\Downloads\</code>) vào tiến trình <code>TheIsleClient-Win64-Shipping</code> — dấu hiệu inject DLL.</td></tr>
+    <tr><th>Cách làm</th><td>Tìm tiến trình game theo <code>gameProcessName</code>, đọc danh sách module (tên + đường dẫn). <code>blockedModules</code> khớp theo tên, tuỳ chọn thêm SHA-256 như 3.1. <code>suspiciousPaths</code> khớp substring trong đường dẫn (có expand biến môi trường).</td></tr>
+    <tr><th>EasyAntiCheat</th><td>Game chạy dưới EAC nên việc đọc module có thể bị từ chối. Khi đó chỉ ghi <span class="fc">module-scan-unavailable</span> (<span class="sev info">info</span>), không kết luận, và nhớ PID đó để không mở handle vào game ở mỗi lần quét.</td></tr>
+    <tr><th>Finding code</th><td><span class="fc">blocked-module</span> theo rule, mặc định <span class="sev high">high</span> · <span class="fc">suspicious-module</span> theo <code>suspiciousSeverity</code>, mặc định <span class="sev medium">medium</span> · <span class="fc">module-scan-unavailable</span> <span class="sev info">info</span>.</td></tr>
+    <tr><th>Lưu ý</th><td>Chạy thử trên máy test cùng EAC trước khi bật cho người chơi (<code>moduleScan.enabled</code>).</td></tr>
+  </table>
+
+  <div class="mod-h"><span class="mod-n">3.4</span><h2>Game mở trước launcher</h2><span class="right"><span class="pill ok">Bật trong policy mẫu</span></span></div>
+  <div class="src">Source code: <code>StartupOrderChecker.cs</code></div>
+  <table class="kv">
+    <tr><th>Phát hiện gì</th><td>Game đã chạy từ trước khi mở launcher — kiểu “inject cheat trước, mở launcher sau cho có”.</td></tr>
+    <tr><th>Cách làm</th><td>So thời điểm khởi động tiến trình game với thời điểm khởi động launcher, cho phép lệch <code>toleranceSeconds</code> (mặc định 5 giây). Không đọc được thời điểm thì bỏ qua. Nếu launcher khởi động lại giữa chừng và nối lại lease cũ, mốc so sánh vẫn là launcher ban đầu, nên không báo nhầm.</td></tr>
+    <tr><th>Finding code</th><td><span class="fc">game-started-before-launcher</span> — mặc định <span class="sev medium">medium</span>. Detail: <code>game=&lt;thời điểm&gt;; launcher=&lt;thời điểm&gt;</code>.</td></tr>
+  </table>
+</section>
+
+<section>
+  <h1 id="s4"><span class="num">04</span>Phát hiện qua file game</h1>
+  <p class="lead">Hai module bổ sung cho nhau: 4.1 kiểm tra kỹ vài file quan trọng bằng hash và chữ ký số; 4.2 so <b>toàn bộ</b> thư mục game với bộ hash lấy từ một bản cài sạch.</p>
+
+  <div class="mod-h"><span class="mod-n">4.1</span><h2>File được bảo vệ: hash và chữ ký số</h2><span class="right"><span class="pill ok">Bật trong policy mẫu</span></span></div>
+  <div class="src">Source code: <code>FileIntegrityChecker.cs</code> · <code>AuthenticodeVerifier.cs</code></div>
+  <table class="kv">
+    <tr><th>Phát hiện gì</th><td>File quan trọng (ví dụ <code>TheIsle.exe</code>) bị thiếu, bị sửa, mất chữ ký số hoặc do bên khác ký.</td></tr>
+    <tr><th>Hash</th><td>Đường dẫn hỗ trợ <code>{GameDir}</code> và biến môi trường. Nếu rule có danh sách <code>sha256</code> (nhiều giá trị = cho phép nhiều phiên bản) thì so SHA-256.</td></tr>
+    <tr><th>Chữ ký số</th><td>Khi bật <code>requireSignature</code>: gọi <code>WinVerifyTrust</code> (<code>WINTRUST_ACTION_GENERIC_VERIFY_V2</code>) để kiểm tra certificate chain tới trusted root, tính toàn vẹn của file và timestamp — chữ ký có timestamp vẫn hợp lệ sau khi certificate hết hạn. Không check revocation online (chỉ dùng cache) để không làm chậm máy người chơi. <code>expectedSigner</code> là chuỗi phải có trong subject của certificate, ví dụ <code>"EasyAntiCheat Oy"</code>.</td></tr>
+    <tr><th>Lưu ý</th><td>Kiểm tra ngày 26/09/2026: <code>TheIsle.exe</code> được EasyAntiCheat Oy ký hợp lệ (đúng như policy mẫu), còn <code>TheIsleClient-Win64-Shipping.exe</code> <b>không có chữ ký số</b> — đừng bật <code>requireSignature</code> cho file này, hãy kiểm tra nó bằng hash hoặc baseline (4.2).</td></tr>
+  </table>
+  <table>
+    <thead><tr><th style="width: 52%;">Kết quả</th><th style="width: 28%;">Finding code</th><th>Severity</th></tr></thead>
+    <tbody>
+      <tr><td>File không tồn tại</td><td><span class="fc">file-missing</span></td><td><span class="sev medium">medium</span></td></tr>
+      <tr><td>Hash không khớp danh sách cho phép</td><td><span class="fc">file-tampered</span></td><td><span class="sev high">high</span></td></tr>
+      <tr><td>Không đọc được file để hash</td><td><span class="fc">file-unreadable</span></td><td><span class="sev low">low</span></td></tr>
+      <tr><td>Không có chữ ký, hoặc định dạng file không hỗ trợ ký</td><td><span class="fc">unsigned-file</span></td><td><span class="sev high">high</span></td></tr>
+      <tr><td>Bị sửa sau khi ký · root không tin cậy · certificate chain đứt · certificate hết hạn mà không có timestamp · certificate bị revoke · bị đánh dấu không tin cậy</td><td><span class="fc">invalid-signature</span></td><td><span class="sev high">high</span></td></tr>
+      <tr><td>Chữ ký hợp lệ nhưng signer khác <code>expectedSigner</code></td><td><span class="fc">wrong-signer</span></td><td><span class="sev high">high</span></td></tr>
+      <tr><td>Lỗi khác, không kiểm tra được</td><td><span class="fc">signature-check-failed</span></td><td><span class="sev low">low</span></td></tr>
+    </tbody>
+  </table>
+
+  <div class="mod-h"><span class="mod-n">4.2</span><h2>So toàn bộ thư mục game với baseline</h2><span class="right"><span class="pill ok">Bật trong policy mẫu</span></span></div>
+  <div class="src">Source code: <code>Baseline.cs</code> · <code>BaselineChecker.cs</code> · <code>FileHashCache.cs</code></div>
+  <table class="kv">
+    <tr><th>Phát hiện gì</th><td>File game bị sửa, bị thiếu, và <b>file lạ được thêm vào</b> — ví dụ một <code>.pak</code> mod xoá cỏ, sương mù để nhìn xuyên, hay một <code>.dll</code> proxy đặt cạnh file exe.</td></tr>
+    <tr><th>Tạo baseline</th><td>Admin chạy <code>IsleWarden.Agent baseline --out &lt;buildId&gt;.json</code> trên một bản cài sạch: hash mọi file khớp <code>*.exe *.dll *.pak *.utoc *.ucas *.sig</code>, bỏ qua thư mục <code>EasyAntiCheat</code> (EAC tự cập nhật thư mục này). Game cập nhật thì phải tạo baseline mới cho build mới.</td></tr>
+    <tr><th>Chọn đúng build</th><td>Build ID đọc từ <code>appmanifest_376210.acf</code> của Steam; launcher lấy baseline đúng build đó (từ server, hoặc file local <code>baselines/{BuildId}.json</code>). Lệch build → <span class="fc">baseline-outdated</span>; chưa có → <span class="fc">baseline-unavailable</span> — đều <span class="sev info">info</span>, bỏ qua so sánh chứ không kết luận.</td></tr>
+    <tr><th>So từng file</th><td>
+      <p>File nhỏ trước, để exe/dll luôn được kiểm ngay lần quét đầu. Thiếu → <span class="fc">file-missing</span> <span class="sev medium">medium</span>. Khác kích thước → <span class="fc">file-tampered</span> (không cần hash). Khác hash → <span class="fc">file-tampered</span> theo <code>baseline.severity</code>, mặc định <span class="sev high">high</span>. Không đọc được → <span class="fc">file-unreadable</span> <span class="sev low">low</span>.</p>
+    </td></tr>
+    <tr><th>File lạ</th><td>Liệt kê thư mục game theo cùng mẫu include/exclude (kể cả file ẩn/hệ thống, bỏ qua symlink/junction); file không có trong baseline → <span class="fc">unexpected-file</span> <span class="sev medium">medium</span>. Tắt được bằng <code>reportUnexpectedFiles: false</code>.</td></tr>
+    <tr><th>Giới hạn + cache</th><td>
+      <p>Mỗi lần quét hash tối đa <code>maxHashMegabytesPerScan</code> (mặc định 512 MB) và luôn hash ít nhất một file; phần còn lại → <span class="fc">baseline-pending</span> <span class="sev info">info</span>, kiểm ở các lần sau. Bản build 24664737 có 109 file khớp mẫu, khoảng 9,35 GB — riêng ba file <code>.ucas</code> đã gần 9 GB, nên chúng được hash rải qua vài lần quét đầu.</p>
+      <p><code>FileHashCache</code> nhớ SHA-256 theo (đường dẫn, kích thước, thời điểm sửa): file không đổi thì không hash lại. Cache nằm trong RAM, nên mỗi lần mở launcher sẽ hash lại từ đầu. File được mở với <code>FileShare.ReadWrite | Delete</code> để vẫn hash được khi game đang mở file.</p>
+    </td></tr>
+  </table>
+  <div class="code-label">Baseline (rút gọn) — tên file và kích thước lấy từ bản build 24664737, hash được cắt ngắn</div>
+<pre class="code">{
+  <span class="jk">"version"</span>: <span class="jn">1</span>, <span class="jk">"appId"</span>: <span class="js">"376210"</span>, <span class="jk">"buildId"</span>: <span class="js">"24664737"</span>,
+  <span class="jk">"include"</span>: [<span class="js">"*.exe"</span>, <span class="js">"*.dll"</span>, <span class="js">"*.pak"</span>, <span class="js">"*.utoc"</span>, <span class="js">"*.ucas"</span>, <span class="js">"*.sig"</span>],
+  <span class="jk">"exclude"</span>: [<span class="js">"EasyAntiCheat"</span>],
+  <span class="jk">"files"</span>: [
+    { <span class="jk">"path"</span>: <span class="js">"TheIsle.exe"</span>,
+      <span class="jk">"size"</span>: <span class="jn">3946736</span>, <span class="jk">"sha256"</span>: <span class="js">"…"</span> },
+    { <span class="jk">"path"</span>: <span class="js">"TheIsle\\Binaries\\Win64\\TheIsleClient-Win64-Shipping.exe"</span>,
+      <span class="jk">"size"</span>: <span class="jn">204050944</span>, <span class="jk">"sha256"</span>: <span class="js">"…"</span> },
+    { <span class="jk">"path"</span>: <span class="js">"TheIsle\\Content\\Paks\\pakchunk0-WindowsClient.ucas"</span>,
+      <span class="jk">"size"</span>: <span class="jn">4041676576</span>, <span class="jk">"sha256"</span>: <span class="js">"…"</span> }
+  ]
+}</pre>
+</section>
+
+<section>
+  <h1 id="s5"><span class="num">05</span>Dấu vết công cụ trên máy</h1>
+  <p class="lead">Người chơi có thể tắt công cụ trước khi mở launcher, khi đó quét tiến trình không thấy gì. Hai module dưới đây tìm dấu vết còn lại: file công cụ còn nằm trên ổ đĩa, và Prefetch — nơi Windows ghi lại chương trình đã từng chạy.</p>
+
+  <div class="mod-h"><span class="mod-n">5.1</span><h2>File công cụ gian lận trên ổ đĩa</h2><span class="right"><span class="pill ok">Bật trong policy mẫu</span></span></div>
+  <div class="src">Source code: <code>FileScanner.cs</code></div>
+  <table class="kv">
+    <tr><th>Phát hiện gì</th><td>File của công cụ đã biết, theo <b>tên chính xác</b> (ví dụ <code>IsleUnlocker.exe</code>), trong các thư mục chọn sẵn — kể cả khi công cụ không chạy.</td></tr>
+    <tr><th>Thư mục</th><td>Token <code>{Downloads}</code>, <code>{Desktop}</code>, <code>{Temp}</code>, <code>{GameDir}</code>, <code>{Documents}</code>, <code>{AppData}</code>, <code>{LocalAppData}</code>, <code>{ProgramFiles}</code>, <code>{ProgramFilesX86}</code>, hoặc biến môi trường.</td></tr>
+    <tr><th>Cách làm</th><td>Duyệt BFS, chỉ so <b>tên</b> file với danh sách (không phân biệt hoa thường). File không khớp bị bỏ ngay — không ghi lại, không gửi đi. Chỉ file đã khớp tên mới bị đọc để hash, và chỉ khi rule có <code>sha256</code>. Không đi theo symlink/junction (tránh vòng lặp, tránh ra ngoài cây thư mục); một file thấy qua hai thư mục lồng nhau chỉ báo một lần.</td></tr>
+    <tr><th>Giới hạn cứng</th><td><code>maxDepth</code> 2 · <code>maxFilesExamined</code> 20.000 · <code>timeoutSeconds</code> 5 — dùng chung cho mọi thư mục của một lần quét, nên không bao giờ quét cả ổ đĩa.</td></tr>
+    <tr><th>Finding code</th><td><span class="fc">blocked-file</span> — mặc định <span class="sev medium">medium</span>: có file chỉ chứng minh người chơi <i>có</i> công cụ, chưa chứng minh đã <i>dùng</i> (có thể tải về rồi để đó). Muốn chặn thẳng thì đặt high.</td></tr>
+  </table>
+
+  <div class="mod-h"><span class="mod-n">5.2</span><h2>Prefetch: lịch sử chạy chương trình</h2><span class="right"><span class="pill off">Tắt mặc định</span></span></div>
+  <div class="src">Source code: <code>ExecutionHistoryScanner.cs</code> · <code>PrefetchReader.cs</code></div>
+  <p>Mỗi khi một chương trình chạy, Windows để lại file <code>C:\Windows\Prefetch\TÊN.EXE-XXXXXXXX.pf</code>, ghi số lần chạy và lần chạy gần nhất. Module này đọc các file đó để thấy công cụ <b>đã chạy trong 7 ngày gần đây</b> (<code>lookbackDays</code>) rồi được tắt trước khi mở launcher.</p>
+  <div class="steps">
+    <div class="step"><div class="step-n">1</div><div><h4>Lọc theo tên trước khi mở file</h4><p>Tên chương trình nằm ngay trong tên file <code>.pf</code> (hậu tố 8–16 chữ số hex là hash đường dẫn). Chỉ file khớp <code>programs</code> (tên chính xác) hoặc <code>keywords</code> (≥ 4 ký tự) mới được mở; mọi chương trình khác không bị mở, ghi hay gửi.</p></div></div>
+    <div class="step"><div class="step-n">2</div><div><h4>Giải nén và đọc</h4><p>Windows 10/11 nén <code>.pf</code> bằng XPRESS Huffman (header “MAM”); code giải nén bằng API công khai <code>RtlDecompressBufferEx</code> của ntdll, kiểm tra magic “SCCA”, rồi đọc tên chương trình, format version (17, 23, 26, 30, 31), lần chạy gần nhất và số lần chạy.</p></div></div>
+    <div class="step"><div class="step-n">3</div><div><h4>Kiểm tra giá trị có hợp lý không</h4><p>Giá trị đọc theo offset phải hợp lý: thời điểm từ năm 2010 đến hiện tại + 1 ngày, số lần chạy 1–1.000.000. Sai thì dùng thời điểm ghi của file <code>.pf</code> hoặc để trống. Offset số lần chạy của Windows 11 (format 31) chưa được xác nhận nên để trống thay vì đoán.</p></div></div>
+    <div class="step"><div class="step-n">4</div><div><h4>Chỉ tính N ngày gần nhất</h4><p>Chỉ tính lần chạy trong <code>lookbackDays</code> ngày; mỗi chương trình báo một lần. Giới hạn an toàn: file <code>.pf</code> lớn hơn 4 MB bị bỏ, dữ liệu giải nén tối đa 32 MB, tối đa 4.096 file hoặc 5 giây mỗi lần quét.</p></div></div>
+  </div>
+  <table>
+    <thead><tr><th style="width: 32%;">Finding code</th><th style="width: 18%;">Severity mặc định</th><th>Khi nào</th></tr></thead>
+    <tbody>
+      <tr><td><span class="fc">executed-tool</span></td><td><span class="sev medium">medium</span></td><td>Chương trình trong <code>programs</code> đã chạy trong <code>lookbackDays</code> ngày gần đây. Detail ví dụ: <code>lần chạy gần nhất 2026-09-25 14:02 UTC — 3 lần — Isle Unlocker</code>.</td></tr>
+      <tr><td><span class="fc">suspicious-executed-name</span></td><td><span class="sev low">low</span></td><td>Tên chương trình chứa từ khoá (heuristic).</td></tr>
+      <tr><td><span class="fc">execution-history-unavailable</span></td><td><span class="sev info">info</span></td><td>Không đọc được Prefetch — thường do launcher không chạy với quyền admin.</td></tr>
+      <tr><td><span class="fc">execution-history-off</span></td><td><span class="sev info">info</span></td><td>Prefetch bị tắt (<code>EnablePrefetcher = 0</code>) — có thể do tinh chỉnh máy, cũng có thể là cách xoá dấu vết.</td></tr>
+    </tbody>
+  </table>
+  <div class="callout warn">
+    <div class="callout-t">Cần quyền admin và phải ghi vào disclosure trước khi bật</div>
+    <p>Chỉ Administrators đọc được thư mục Prefetch; không có quyền thì module này chỉ ghi <code>info</code>, không kết luận. Đây là lịch sử chạy phần mềm của máy người chơi, nên trước khi bật phải thêm câu tương ứng vào <code>disclosure</code> và tăng <code>disclosureVersion</code> để mọi người chơi đồng ý lại.</p>
+  </div>
+</section>
+
+<section>
+  <h1 id="s6"><span class="num">06</span>Overlay lạ và HWID</h1>
+
+  <div class="mod-h" style="margin-top: 4pt;"><span class="mod-n">6.1</span><h2>Cửa sổ lạ phủ lên game</h2><span class="right"><span class="pill plan">Đã viết · chưa nối vào Scanner</span></span></div>
+  <div class="src">Source code: <code>OverlayScanner.cs</code></div>
+  <table class="kv">
+    <tr><th>Phát hiện gì</th><td>Cửa sổ của tiến trình khác đang phủ lên cửa sổ game với window style đặc trưng của overlay — thường là ESP/radar vẽ đè lên game.</td></tr>
+    <tr><th>Cách làm</th><td>
+      <p><code>EnumWindows</code> lấy mọi top-level window đang hiển thị: PID, toạ độ, extended style, tiêu đề. Cửa sổ game là cửa sổ hiển thị lớn nhất của tiến trình game; chưa có cửa sổ game thì không kết luận.</p>
+      <p>Ứng viên là cửa sổ của tiến trình khác, không thuộc <code>AllowedProcesses</code> (steam, discord, obs64…) hay tiến trình hệ thống Windows (explorer, dwm, textinputhost, ctfmon…), có <code>WS_EX_TOPMOST</code> / <code>WS_EX_LAYERED</code> / <code>WS_EX_TRANSPARENT</code> (topmost, trong suốt, click-through) và phủ ≥ 15% diện tích cửa sổ game (<code>MinOverlapFraction</code>).</p>
+    </td></tr>
+    <tr><th>Finding code</th><td><span class="fc">foreign-overlay</span> — mặc định <span class="sev medium">medium</span>. Detail: <code>title="…"; phủ 42%; topmost+layered+click-through</code>.</td></tr>
+    <tr><th>Giới hạn</th><td>Chỉ bắt overlay dạng cửa sổ; overlay vẽ qua hook DirectX không phải cửa sổ nên thuộc phạm vi module DLL (3.3). Dễ báo nhầm với Steam, Discord, bộ gõ, phần mềm quay màn hình — luôn chạy observe với allowlist trước.</td></tr>
+  </table>
+  <div class="callout gray">
+    <div class="callout-t">Để nối vào Scanner: ba thay đổi nhỏ</div>
+    <ol>
+      <li>Chuyển <code>OverlayScanRule</code> vào <code>Policy</code> (hiện đang đứng riêng trong <code>OverlayScanner.cs</code>).</li>
+      <li>Thêm <code>foreign-overlay</code> vào <code>FindingCodes</code>.</li>
+      <li>Gọi <code>OverlayScanner.Scan</code> trong <code>Scanner.Run</code>.</li>
+    </ol>
+    <p>Nên thêm hai tín hiệu mà overlay hiện đại hay dùng để ẩn: <code>GetWindowDisplayAffinity</code> (cửa sổ tự giấu khỏi screenshot) và <code>DwmGetWindowAttribute(DWMWA_CLOAKED)</code>.</p>
+  </div>
+
+  <div class="mod-h"><span class="mod-n">6.2</span><h2>HWID: ban theo máy</h2><span class="right"><span class="pill ok">Gửi khi đăng nhập</span></span></div>
+  <div class="src">Source code: <code>DeviceFingerprint.cs</code> (<code>DeviceFingerprintCollector</code>) · <code>WmiIdentifiers.cs</code></div>
+  <p>Mục đích: ban gắn với <b>chiếc máy</b> chứ không chỉ tài khoản — tạo tài khoản Steam mới trên cùng máy vẫn bị chặn.</p>
+  <table>
+    <thead><tr><th style="width: 19%;">Thành phần</th><th style="width: 47%;">Lấy từ</th><th>Ghi chú</th></tr></thead>
+    <tbody>
+      <tr><td><code>machineGuid</code></td><td>Registry <code>HKLM\SOFTWARE\Microsoft\Cryptography\MachineGuid</code> (view 64-bit)</td><td>Đổi khi cài lại Windows</td></tr>
+      <tr><td><code>mac</code></td><td>Card mạng đang hoạt động, ưu tiên card dây, bỏ loopback/tunnel</td><td>Đổi được bằng phần mềm</td></tr>
+      <tr><td><code>diskSerial</code></td><td>WMI <code>Win32_DiskDrive</code>: ổ chứa Windows, không thì ổ cố định đầu tiên; bỏ ổ USB</td><td>Ổn định</td></tr>
+      <tr><td><code>baseboardSerial</code></td><td>WMI <code>Win32_BaseBoard.SerialNumber</code></td><td>Máy ảo thường để trống</td></tr>
+      <tr><td><code>biosSerial</code></td><td>WMI <code>Win32_BIOS.SerialNumber</code></td><td>Máy ảo thường để trống</td></tr>
+      <tr><td><code>cpuId</code></td><td>WMI <code>Win32_Processor.ProcessorId</code></td><td>Trùng giữa các CPU cùng đời, nên <b>không</b> dùng để ban hay so khớp</td></tr>
+    </tbody>
+  </table>
+  <ul>
+    <li>Giá trị rác OEM hay để (<code>To be filled by O.E.M.</code>, <code>Default string</code>, <code>0</code>, <code>None</code>…) bị loại. Nguồn nào không đọc được thì bỏ qua, phần còn lại vẫn dùng.</li>
+    <li><code>DeviceId</code> = SHA-256 của chuỗi <code>key=value|…</code> sắp theo key; không đọc được nguồn nào thì là <code>UNKNOWN</code>.</li>
+    <li>Launcher gửi fingerprint <b>một lần, lúc đăng nhập</b> (mục 09), qua HTTPS. Server không lưu serial thô: chỉ lưu <code>DeviceId</code> và <code>HMAC-SHA256(pepper bí mật, "kind:value")</code> của từng thành phần.</li>
+    <li>Ban nhắm được Steam ID, device, hoặc <b>từng linh kiện</b> (ví dụ serial ổ đĩa), nên thay một linh kiện không thoát được ban. Máy mới trùng linh kiện với máy của Steam ID khác — nhất là tài khoản đang bị ban — được giữ lại chờ admin duyệt, và người chơi không được báo lý do để không “dạy” cách né.</li>
+    <li>Tự kiểm: <code>IsleWarden.Agent fingerprint</code> in fingerprint của máy (che bớt giá trị, <code>--raw</code> để xem đầy đủ) và không gửi gì.</li>
+  </ul>
+</section>
+
+<section class="pb">
+  <h1 id="s7"><span class="num">07</span>Finding code, severity, observe/enforce</h1>
+
+  <h2 style="margin-top: 4pt;">Các mức severity</h2>
+  <div class="ladder">
+    <div class="rung info"><span class="sev info">info</span><p>Ngữ cảnh, không phải cáo buộc: không đọc được Prefetch, chưa có baseline… Không làm report “bẩn”, không tính vào risk score.</p></div>
+    <div class="rung low"><span class="sev low">low</span><p>Tín hiệu yếu, heuristic: khớp từ khoá, không đọc được file.</p></div>
+    <div class="rung medium"><span class="sev medium">medium</span><p>Đáng chú ý, cần người xem: công cụ nằm trên ổ đĩa, file lạ trong thư mục game, game mở trước launcher.</p></div>
+    <div class="rung high"><span class="sev high">high</span><p>Bằng chứng mạnh: tiến trình bị cấm đang chạy, file game bị sửa, chữ ký sai.</p></div>
+    <div class="rung critical"><span class="sev critical">critical</span><p>Dành cho rule admin tự đặt; config mặc định không dùng.</p></div>
+  </div>
+  <p>Report được tính là <b>sạch</b> (<code>clean = true</code>) khi không có finding nào từ <span class="sev low">low</span> trở lên.</p>
+
+  <div class="grid2" style="margin: 8pt 0 10pt;">
+    <div class="card top-ok">
+      <div class="card-k" style="color: var(--ok);">observe — mặc định</div>
+      <p>Mọi finding đều được ghi log và gửi cảnh báo, nhưng <b>không chặn ai</b>. Dùng để chạy thử, đo báo nhầm, chỉnh danh sách trước khi siết.</p>
+    </div>
+    <div class="card top-danger">
+      <div class="card-k" style="color: var(--danger);">enforce</div>
+      <p>Finding ≥ <code>EnforceThreshold</code> (mặc định <span class="sev high">high</span>) thì từ chối vào server hoặc thu hồi lease đang chơi. Người chơi thấy lý do và support code <code class="nw">R-&lt;id&gt;</code> (mục 08).</p>
+    </div>
+  </div>
+  <p class="small">Với ngưỡng mặc định <b>high</b>, các tín hiệu heuristic (từ khoá: low; file trên ổ đĩa, Prefetch: medium) không tự chặn được ai — chúng chỉ đưa người chơi vào danh sách cần xem xét. Admin có thể cấp <b>bypass</b> cho một Steam ID (streamer, staff): gate anti-cheat được nới, nhưng report vẫn được ghi đầy đủ.</p>
+
+  <h2>Danh sách finding code</h2>
+  <p class="small muted">23 code trong <code>FindingCodes</code>, cộng <code>foreign-overlay</code> của <code>OverlayScanner</code> (chưa nối). Severity có dấu * đổi được trong policy.</p>
+  <table>
+    <thead><tr><th style="width: 30%;">Code</th><th style="width: 22%;">Module</th><th style="width: 13%;">Severity</th><th>Ý nghĩa</th></tr></thead>
+    <tbody>
+      <tr class="grp"><td colspan="4">Tiến trình</td></tr>
+      <tr><td><span class="fc">blocked-process</span></td><td>ProcessScanner</td><td><span class="sev high">high</span>*</td><td>Tiến trình bị cấm đang chạy</td></tr>
+      <tr><td><span class="fc">suspicious-process-name</span></td><td>ProcessInventoryScanner</td><td><span class="sev low">low</span>*</td><td>Tên tiến trình chứa từ khoá đáng ngờ</td></tr>
+      <tr><td><span class="fc">blocked-module</span></td><td>ModuleScanner</td><td><span class="sev high">high</span>*</td><td>Game đang nạp DLL bị cấm</td></tr>
+      <tr><td><span class="fc">suspicious-module</span></td><td>ModuleScanner</td><td><span class="sev medium">medium</span>*</td><td>Game nạp DLL từ thư mục đáng ngờ</td></tr>
+      <tr><td><span class="fc">module-scan-unavailable</span></td><td>ModuleScanner</td><td><span class="sev info">info</span></td><td>Không đọc được danh sách module (thường do EAC)</td></tr>
+      <tr><td><span class="fc">game-started-before-launcher</span></td><td>StartupOrderChecker</td><td><span class="sev medium">medium</span>*</td><td>Game chạy trước khi mở launcher</td></tr>
+      <tr class="grp"><td colspan="4">File game</td></tr>
+      <tr><td><span class="fc">file-missing</span></td><td>FileIntegrity, Baseline</td><td><span class="sev medium">medium</span></td><td>Thiếu file được bảo vệ / file có trong baseline</td></tr>
+      <tr><td><span class="fc">file-tampered</span></td><td>FileIntegrity, Baseline</td><td><span class="sev high">high</span></td><td>Hash hoặc kích thước không khớp (baseline: đổi được)</td></tr>
+      <tr><td><span class="fc">file-unreadable</span></td><td>FileIntegrity, Baseline</td><td><span class="sev low">low</span></td><td>Không đọc được file để hash</td></tr>
+      <tr><td><span class="fc">unexpected-file</span></td><td>BaselineChecker</td><td><span class="sev medium">medium</span></td><td>File lạ trong thư mục game</td></tr>
+      <tr><td><span class="fc">unsigned-file</span></td><td>FileIntegrityChecker</td><td><span class="sev high">high</span></td><td>File không có chữ ký số</td></tr>
+      <tr><td><span class="fc">invalid-signature</span></td><td>FileIntegrityChecker</td><td><span class="sev high">high</span></td><td>Chữ ký số không hợp lệ</td></tr>
+      <tr><td><span class="fc">wrong-signer</span></td><td>FileIntegrityChecker</td><td><span class="sev high">high</span></td><td>Ký bởi bên không mong đợi</td></tr>
+      <tr><td><span class="fc">signature-check-failed</span></td><td>FileIntegrityChecker</td><td><span class="sev low">low</span></td><td>Không kiểm tra được chữ ký</td></tr>
+      <tr><td><span class="fc">game-not-found</span></td><td>Scanner</td><td><span class="sev medium">medium</span></td><td>Không xác định được thư mục game khi policy cần</td></tr>
+      <tr><td><span class="fc">baseline-unavailable</span></td><td>BaselineChecker</td><td><span class="sev info">info</span></td><td>Chưa có baseline cho bản game này</td></tr>
+      <tr><td><span class="fc">baseline-outdated</span></td><td>BaselineChecker</td><td><span class="sev info">info</span></td><td>Baseline không khớp bản game đang cài</td></tr>
+      <tr><td><span class="fc">baseline-pending</span></td><td>BaselineChecker</td><td><span class="sev info">info</span></td><td>Còn file lớn sẽ kiểm ở các lần quét sau</td></tr>
+      <tr class="grp"><td colspan="4">Dấu vết trên máy</td></tr>
+      <tr><td><span class="fc">blocked-file</span></td><td>FileScanner</td><td><span class="sev medium">medium</span>*</td><td>File công cụ gian lận trên ổ đĩa</td></tr>
+      <tr><td><span class="fc">executed-tool</span></td><td>ExecutionHistory</td><td><span class="sev medium">medium</span>*</td><td>Công cụ đã chạy trong N ngày gần đây</td></tr>
+      <tr><td><span class="fc">suspicious-executed-name</span></td><td>ExecutionHistory</td><td><span class="sev low">low</span>*</td><td>Chương trình đã chạy có tên chứa từ khoá</td></tr>
+      <tr><td><span class="fc">execution-history-unavailable</span></td><td>ExecutionHistory</td><td><span class="sev info">info</span></td><td>Không đọc được Prefetch (thiếu quyền admin)</td></tr>
+      <tr><td><span class="fc">execution-history-off</span></td><td>ExecutionHistory</td><td><span class="sev info">info</span></td><td>Prefetch đang bị tắt trên máy</td></tr>
+      <tr class="grp"><td colspan="4">Chưa nối vào Scanner</td></tr>
+      <tr><td><span class="fc">foreign-overlay</span></td><td>OverlayScanner</td><td><span class="sev medium">medium</span>*</td><td>Cửa sổ lạ phủ lên game</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h1 id="s8"><span class="num">08</span>Ghi log: từ finding đến bằng chứng</h1>
+  <p class="lead">Mỗi finding là một bản ghi có cấu trúc; các finding của một lần quét gom thành một scan report. Report được lưu lại để admin tra đúng bằng chứng khi người chơi khiếu nại.</p>
+
+  <h2>8.1 Một finding</h2>
+  <table>
+    <thead><tr><th style="width: 15%;">Trường</th><th style="width: 34%;">Nội dung</th><th>Dùng để</th></tr></thead>
+    <tbody>
+      <tr><td><code>code</code></td><td>Loại finding, ví dụ <code>blocked-process</code> (danh sách trong <code>FindingCodes</code>)</td><td>Lọc, thống kê, xử lý tự động</td></tr>
+      <tr><td><code>severity</code></td><td><code>info · low · medium · high · critical</code></td><td>Quyết định chặn (enforce), ngưỡng cảnh báo Discord, risk score</td></tr>
+      <tr><td><code>message</code></td><td>Câu tiếng Việt cho người đọc</td><td>Hiển thị cho admin và người chơi</td></tr>
+      <tr><td><code>detail</code></td><td>Bằng chứng kỹ thuật, có thể trống</td><td>Đường dẫn file, hash, signer, thời điểm, từ khoá đã khớp</td></tr>
+    </tbody>
+  </table>
+
+  <h2>8.2 Scan report</h2>
+  <p>Mỗi lần quét tạo một <code>ScanReport</code> — thứ launcher gửi lên server và là bản log gốc được lưu.</p>
+<pre class="code">{
+  <span class="jk">"timestampUtc"</span>: <span class="js">"2026-09-25T18:57:42.2708001+00:00"</span>,
+  <span class="jk">"machine"</span>: <span class="js">"DESKTOP-PLAYER01"</span>,
+  <span class="jk">"clean"</span>: <span class="jn">false</span>,
+  <span class="jk">"findings"</span>: [
+    { <span class="jk">"code"</span>: <span class="js">"blocked-process"</span>, <span class="jk">"severity"</span>: <span class="js">"high"</span>,
+      <span class="jk">"message"</span>: <span class="js">"Phát hiện tiến trình bị cấm: cheatengine-x86_64 (PID 8124)"</span>,
+      <span class="jk">"detail"</span>: <span class="js">"Cheat Engine — C:\\Program Files\\Cheat Engine 7.5\\cheatengine-x86_64.exe"</span> },
+    { <span class="jk">"code"</span>: <span class="js">"blocked-file"</span>, <span class="jk">"severity"</span>: <span class="js">"medium"</span>,
+      <span class="jk">"message"</span>: <span class="js">"Tìm thấy công cụ gian lận trên máy: IsleUnlocker.exe"</span>,
+      <span class="jk">"detail"</span>: <span class="js">"Isle Unlocker — C:\\Users\\player\\Downloads\\IsleUnlocker.exe"</span> },
+    { <span class="jk">"code"</span>: <span class="js">"execution-history-unavailable"</span>, <span class="jk">"severity"</span>: <span class="js">"info"</span>,
+      <span class="jk">"message"</span>: <span class="js">"Không đọc được nhật ký thực thi của Windows."</span>,
+      <span class="jk">"detail"</span>: <span class="js">"thư mục Prefetch cần quyền quản trị để đọc"</span> }
+  ],
+  <span class="jk">"processes"</span>: <span class="jn">null</span>
+}</pre>
+  <p class="small muted">Định dạng lấy từ một lần quét thật ngày 26/09/2026; tên máy, đường dẫn và finding <code>blocked-process</code> là minh hoạ. Trong request gửi lên server và trong database, tên trường là camelCase; lệnh <code>scan</code> in cùng nội dung với tên trường dạng PascalCase. <code>processes</code> chỉ có giá trị khi bật <code>reportRunningProcesses</code> (3.2).</p>
+
+  <h2>8.3 Log tại máy người chơi</h2>
+  <p>Launcher in tóm tắt mỗi lần quét ra console. Nó <b>không ghi file log riêng</b> trên máy người chơi — bản log có giá trị là bản server nhận. Cần lưu local để thử thì redirect output của <code>scan --once</code> vào file.</p>
+<pre class="code term"><span class="dim">[01:57:42]</span> Quét: CÓ PHÁT HIỆN (3 mục)
+    - <span class="hi">[High]</span> blocked-process: Phát hiện tiến trình bị cấm: cheatengine-x86_64 (PID 8124)
+    - <span class="md">[Medium]</span> blocked-file: Tìm thấy công cụ gian lận trên máy: IsleUnlocker.exe
+    - <span class="dim">[Info]</span> execution-history-unavailable: Không đọc được nhật ký thực thi của Windows.</pre>
+  <p>Khi bị chặn (enforce), launcher in từng gate đã xét, gate bị chặn, và <b>support code</b> trỏ tới report trong log:</p>
+<pre class="code term">  <span class="ok">[ok]</span>        Thiết bị
+  <span class="ok">[ok]</span>        Lệnh cấm
+  <span class="ok">[ok]</span>        Discord — PlayerName
+  <span class="ok">[ok]</span>        Thông báo — iw-v2
+  <span class="hi">[CHẶN]</span>      Anti-cheat
+Bị chặn ở bước Anti-cheat: Phát hiện phần mềm không được phép trên máy. Tắt nó rồi thử lại.
+  Chi tiết: blocked-process: Phát hiện tiến trình bị cấm: cheatengine-x86_64 (PID 8124)
+  Mã tra cứu (gửi admin khi khiếu nại): <span class="md">R-1042</span>
+  Mã lỗi: anticheat-blocked</pre>
+
+  <h2>8.4 Log được lưu ở đâu</h2>
+  <table>
+    <thead><tr><th style="width: 22%;">Nơi lưu</th><th style="width: 53%;">Ghi gì</th><th>Khi nào</th></tr></thead>
+    <tbody>
+      <tr><td><b>Bảng <code>reports</code></b></td><td>Một dòng mỗi report: lease, device, Steam ID, <code>clean</code>, <code>findings_json</code> (bản gốc), <code>processes_json</code> (nếu bật), thời điểm nhận. Id của dòng chính là support code <code class="nw">R-&lt;id&gt;</code>.</td><td>Mỗi lần xin vào (kể cả khi bị chặn ở gate anti-cheat) và mỗi heartbeat</td></tr>
+      <tr><td><b>Bảng <code>findings</code></b></td><td>Một dòng mỗi finding, tách từ <code>findings_json</code>: <code>code</code>, <code>severity</code>, <code>severity_rank</code> (0–4), <code>message</code>, <code>detail</code>, <code>steam_id</code>, <code>received_utc</code>. Có index theo (Steam ID, thời gian) và (code, thời gian).</td><td>Cùng transaction với <code>reports</code>; xoá report thì xoá luôn</td></tr>
+      <tr><td><b><code>sessions.end_code</code></b> / <code>end_reason</code></td><td>Vì sao một lease kết thúc: <code>anticheat-blocked</code> kèm <code class="nw">[R-&lt;id&gt;]</code> và các finding vượt ngưỡng, <code>lease-expired</code>, <code>banned</code>…</td><td>Khi lease bị thu hồi, hết hạn hoặc được trả lại</td></tr>
+      <tr><td><b><code>admin_actions</code></b>, <code>ban_evidence</code></td><td>Log thao tác của admin kèm report làm bằng chứng; tóm tắt bằng chứng của ban được giữ lại cả khi report gốc đã bị dọn.</td><td>Khi admin xử lý</td></tr>
+      <tr><td><b>Discord webhook</b></td><td>Tối đa 10 finding ≥ <code>Discord.MinSeverity</code> (mặc định medium) mỗi report, có đánh dấu nếu người chơi đang được bypass; cùng các sự kiện: chặn do ban, thu hồi lease, mất tín hiệu launcher, máy mới cần duyệt.</td><td>Ngay khi nhận report hoặc sự kiện</td></tr>
+    </tbody>
+  </table>
+  <p class="small">Heartbeat 30 giây nghĩa là khoảng 120 report mỗi giờ cho mỗi người chơi, phần lớn lặp lại — nên đặt thời hạn lưu và dọn report cũ định kỳ; bằng chứng gắn với ban vẫn còn nhờ <code>ban_evidence</code>.</p>
+
+  <h2>8.5 Risk score</h2>
+  <p><code>RiskScorer</code> (<code>server/islewarden_server/risk.py</code>) gom log của một người chơi thành một con số để sắp thứ tự cần xem xét. Ba quy tắc:</p>
+  <div class="grid3" style="margin-bottom: 8pt;">
+    <div class="card pr"><div class="pr-n">1</div><div><h4>Gộp theo (code, ngày)</h4><p>Heartbeat làm một finding lặp hàng trăm lần mỗi phiên; đếm từng lần sẽ thổi phồng điểm.</p></div></div>
+    <div class="card pr"><div class="pr-n">2</div><div><h4><code>info</code> = 0 điểm</h4><p>Ngữ cảnh, không phải cáo buộc.</p></div></div>
+    <div class="card pr"><div class="pr-n">3</div><div><h4>Giảm dần theo thời gian</h4><p>Half-life 7 ngày: finding tháng trước không giữ người chơi ở mức cao mãi.</p></div></div>
+  </div>
+  <p><b>Score</b> = Σ trọng số × 0,5<sup>tuổi (ngày) / 7</sup>, tối đa 100, với trọng số low 1 · medium 5 · high 20 · critical 40. Band: 0 clean · dưới 10 low · dưới 35 medium · từ 35 high. Ví dụ: <code>blocked-process</code> (high) cách đây 3 ngày ≈ 14,9 điểm, cộng <code>executed-tool</code> (medium) hôm nay 5 điểm ≈ 20 → band medium. Risk score <b>không bao giờ tự chặn ai</b>; nó chỉ sắp thứ tự, kèm tối đa 4 lý do (code, số ngày, lần gần nhất) để admin giải thích với người chơi.</p>
+
+  <h2>8.6 Truy vấn log mẫu (SQLite)</h2>
+<pre class="code"><span class="jc">-- 50 finding gần nhất của một người chơi</span>
+<span class="kw">SELECT</span> received_utc, code, severity, message, detail
+<span class="kw">FROM</span> findings <span class="kw">WHERE</span> steam_id = <span class="js">'76561198000000001'</span>
+<span class="kw">ORDER BY</span> received_utc <span class="kw">DESC LIMIT</span> <span class="jn">50</span>;
+
+<span class="jc">-- Code nào xuất hiện ở nhiều người chơi nhất trong 7 ngày (bỏ info)</span>
+<span class="kw">SELECT</span> code, <span class="kw">COUNT</span>(<span class="kw">DISTINCT</span> steam_id) <span class="kw">AS</span> nguoi_choi, <span class="kw">COUNT</span>(*) <span class="kw">AS</span> so_lan
+<span class="kw">FROM</span> findings
+<span class="kw">WHERE</span> severity_rank >= <span class="jn">1</span>
+  <span class="kw">AND</span> received_utc >= strftime(<span class="js">'%Y-%m-%dT%H:%M:%S'</span>, <span class="js">'now'</span>, <span class="js">'-7 days'</span>)
+<span class="kw">GROUP BY</span> code <span class="kw">ORDER BY</span> nguoi_choi <span class="kw">DESC</span>;
+
+<span class="jc">-- Người chơi gửi support code R-1042</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> reports <span class="kw">WHERE</span> id = <span class="jn">1042</span>;</pre>
+</section>
+
+<section class="pb">
+  <h1 id="s9"><span class="num">09</span>Đăng nhập Steam + Discord, cấp quyền vào server</h1>
+  <p class="lead">Trước khi quét, server cần biết người chơi là ai. Mỗi máy đăng nhập một lần: <b>Steam</b> chứng minh người chơi sở hữu Steam ID nào, <b>Discord</b> chứng minh họ ở trong Discord của server và có role được phép chơi. Xong bước này launcher mới nhận device key.</p>
+
+  <figure>
+    <svg viewBox="0 0 760 392" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Luồng đăng nhập Steam và Discord">
+      <defs>
+        <marker id="am" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#34424F"/>
+        </marker>
+        <!-- Label backgrounds, so lifelines never run through the text. -->
+        <filter id="lb0" x="-0.04" y="-0.08" width="1.08" height="1.16"><feFlood flood-color="#FFFFFF"/><feComposite in="SourceGraphic" operator="over"/></filter>
+        <filter id="lb1" x="-0.04" y="-0.08" width="1.08" height="1.16"><feFlood flood-color="#EAF0F8"/><feComposite in="SourceGraphic" operator="over"/></filter>
+        <filter id="lb2" x="-0.04" y="-0.08" width="1.08" height="1.16"><feFlood flood-color="#EEEAF6"/><feComposite in="SourceGraphic" operator="over"/></filter>
+      </defs>
+
+      <rect x="0" y="108" width="760" height="92" rx="6" fill="#EAF0F8"/>
+      <text class="zl" x="752" y="122" text-anchor="end" style="fill:#4A6FA5">STEAM</text>
+      <rect x="0" y="202" width="760" height="92" rx="6" fill="#EEEAF6"/>
+      <text class="zl" x="752" y="216" text-anchor="end" style="fill:#6A5AA0">DISCORD</text>
+
+      <rect x="10" y="6" width="120" height="28" rx="7" fill="#0B2A3A"/><text class="hd" x="70" y="24">Launcher</text>
+      <rect x="180" y="6" width="110" height="28" rx="7" fill="#34424F"/><text class="hd" x="235" y="24">Trình duyệt</text>
+      <rect x="330" y="6" width="140" height="28" rx="7" fill="#0F5B6B"/><text class="hd" x="400" y="24">Server anti-cheat</text>
+      <rect x="520" y="6" width="90" height="28" rx="7" fill="#4A6FA5"/><text class="hd" x="565" y="24">Steam</text>
+      <rect x="655" y="6" width="90" height="28" rx="7" fill="#6A5AA0"/><text class="hd" x="700" y="24">Discord</text>
+
+      <g stroke="#B8C4CF" stroke-width="1.2" stroke-dasharray="4 4">
+        <line x1="70" y1="34" x2="70" y2="388"/>
+        <line x1="235" y1="34" x2="235" y2="388"/>
+        <line x1="400" y1="34" x2="400" y2="388"/>
+        <line x1="565" y1="34" x2="565" y2="388"/>
+        <line x1="700" y1="34" x2="700" y2="388"/>
+      </g>
+
+      <g stroke="#34424F" stroke-width="1.3" fill="none">
+        <line x1="70" y1="64" x2="233" y2="64" marker-end="url(#am)"/>
+        <line x1="235" y1="94" x2="398" y2="94" marker-end="url(#am)"/>
+        <line x1="235" y1="128" x2="563" y2="128" marker-end="url(#am)"/>
+        <line x1="565" y1="158" x2="402" y2="158" marker-end="url(#am)"/>
+        <line x1="400" y1="188" x2="563" y2="188" marker-end="url(#am)"/>
+        <line x1="235" y1="222" x2="698" y2="222" marker-end="url(#am)"/>
+        <line x1="700" y1="252" x2="402" y2="252" marker-end="url(#am)"/>
+        <line x1="400" y1="282" x2="698" y2="282" marker-end="url(#am)"/>
+        <line x1="235" y1="314" x2="72" y2="314" marker-end="url(#am)"/>
+        <line x1="70" y1="344" x2="398" y2="344" marker-end="url(#am)"/>
+        <line x1="400" y1="374" x2="72" y2="374" stroke-dasharray="5 3" marker-end="url(#am)"/>
+      </g>
+      <text class="ml" filter="url(#lb0)" x="152" y="58"><tspan class="nb">1</tspan> mở /login/start</text>
+      <text class="ml" filter="url(#lb0)" x="317" y="88"><tspan class="nb">2</tspan> port, state, challenge</text>
+      <text class="ml" filter="url(#lb1)" x="399" y="122"><tspan class="nb">3</tspan> đăng nhập Steam (OpenID 2.0)</text>
+      <text class="ml" filter="url(#lb1)" x="483" y="152"><tspan class="nb">4</tspan> assertion đã ký</text>
+      <text class="ml" filter="url(#lb1)" x="483" y="182"><tspan class="nb">5</tspan> check_authentication</text>
+      <text class="ml" filter="url(#lb2)" x="466" y="216"><tspan class="nb">6</tspan> đăng nhập Discord (OAuth2, scope identify)</text>
+      <text class="ml" filter="url(#lb2)" x="550" y="246"><tspan class="nb">7</tspan> callback ?code</text>
+      <text class="ml" filter="url(#lb2)" x="550" y="276"><tspan class="nb">8</tspan> đổi code lấy user · bot đọc role</text>
+      <text class="ml" filter="url(#lb0)" x="152" y="308"><tspan class="nb">9</tspan> code 1 lần → 127.0.0.1</text>
+      <text class="ml" filter="url(#lb0)" x="234" y="338"><tspan class="nb">10</tspan> POST /api/login/complete: code + verifier + fingerprint</text>
+      <text class="ml" filter="url(#lb0)" x="234" y="368"><tspan class="nb">11</tspan> deviceId + device key</text>
+    </svg>
+    <figcaption><b>Hình 2.</b> Đăng nhập theo chuẩn cho native app (RFC 8252: redirect về loopback + PKCE). Bước 3–8 diễn ra trong trình duyệt; server redirect giữa các bước.</figcaption>
+  </figure>
+
+  <div class="grid3" style="margin-bottom: 10pt;">
+    <div class="card top-brand">
+      <div class="card-k" style="color: var(--plan);">Steam · bước 3–5</div>
+      <p>Server chỉ nhận assertion khi: <code>return_to</code> đúng địa chỉ của chính lượt đăng nhập, đủ các trường bắt buộc được ký, Steam xác nhận lại chữ ký (<code>check_authentication</code>), và <code>claimed_id</code> đúng dạng SteamID64. Không cần Steam API key.</p>
+    </div>
+    <div class="card top-brand">
+      <div class="card-k" style="color: #6A5AA0;">Discord · bước 6–8</div>
+      <p>Token của người chơi (scope <code>identify</code>) chỉ dùng một lần để biết họ là ai, không lưu. Role được đọc bằng bot của ứng dụng (bot ở trong guild, không cần quyền gì), nên kiểm lại được về sau.</p>
+    </div>
+    <div class="card top-brand">
+      <div class="card-k">Về launcher · bước 9–11</div>
+      <p>Redirect cuối chỉ tới được <code>127.0.0.1</code> của chính máy đã đăng nhập, và chỉ launcher giữ PKCE verifier mới đổi được code — gửi link đăng nhập cho người khác không chiếm được tài khoản.</p>
+    </div>
+  </div>
+  <ul class="small">
+    <li><b>Một Discord ↔ một Steam ID</b>: một người có role không thể “bảo lãnh” nhiều tài khoản Steam; đổi liên kết là việc của admin. Lỗi đăng nhập có code riêng: <code>login-expired</code>, <code>steam-login-failed</code>, <code>discord-login-failed</code>, <code>discord-linked-elsewhere</code>, <code>steam-linked-elsewhere</code>.</li>
+    <li>Lượt đăng nhập dang dở tồn tại tối đa 10 phút. Device key trả về đúng một lần: server chỉ lưu hash, launcher giữ bằng DPAPI của Windows. Fingerprint máy (6.2) được gửi ở bước 10.</li>
+  </ul>
+
+  <h2>Cấp quyền vào server</h2>
+  <p>Khi người chơi vào chơi, launcher quét một lần rồi gửi report kèm yêu cầu. Server xét các gate <b>theo thứ tự</b> và dừng ở gate đầu tiên chặn, nên người chơi biết chính xác gate nào đang chặn mình:</p>
+  <table>
+    <thead><tr><th style="width: 5%;">#</th><th style="width: 15%;">Gate</th><th style="width: 45%;">Chặn khi</th><th>Code</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td><b>Device</b></td><td>Chưa đăng nhập / device key sai · máy bị từ chối · máy đang chờ duyệt</td><td><span class="fc">device-unknown</span> <span class="fc">device-rejected</span> <span class="fc">device-pending</span></td></tr>
+      <tr><td>2</td><td><b>Ban</b></td><td>Steam ID, device hoặc một linh kiện nằm trong ban list</td><td><span class="fc">banned</span></td></tr>
+      <tr><td>3</td><td><b>Discord</b></td><td>Chưa liên kết · không còn trong Discord · không có role</td><td><span class="fc">discord-not-linked</span> <span class="fc">discord-not-member</span> <span class="fc">discord-role-missing</span></td></tr>
+      <tr><td>4</td><td><b>Consent</b></td><td>Chưa đồng ý disclosure phiên bản hiện tại</td><td><span class="fc">consent-required</span></td></tr>
+      <tr><td>5</td><td><b>Anti-cheat</b></td><td>Enforce và có finding ≥ ngưỡng</td><td><span class="fc">anticheat-blocked</span></td></tr>
+    </tbody>
+  </table>
+  <p>Qua hết năm gate thì server cấp <b>lease</b> và thêm Steam ID vào whitelist của game server. Trong lúc chơi, mỗi heartbeat (30 giây) mang theo scan report mới và được xét lại: ban, trạng thái máy, role Discord (hỏi lại Discord mỗi 10 phút; Discord lỗi thì dùng kết quả gần nhất để không khoá oan cả server), và anti-cheat. Vi phạm thì lease bị thu hồi và Steam ID bị gỡ khỏi whitelist; tắt launcher hoặc mất tín hiệu quá 75 giây cũng mất lease.</p>
+</section>
+
+<section>
+  <h1 id="s10"><span class="num">10</span>Wall-hack: module nào bắt được</h1>
+  <table>
+    <thead><tr><th style="width: 40%;">Cách làm wall-hack</th><th style="width: 36%;">Module</th><th>Trạng thái</th></tr></thead>
+    <tbody>
+      <tr><td>Mod <code>.pak</code>/<code>.utoc</code>/<code>.ucas</code> xoá cỏ, sương mù… đặt vào thư mục game, hoặc sửa file game có sẵn</td><td>BaselineChecker: <span class="fc">unexpected-file</span>, <span class="fc">file-tampered</span></td><td><span class="pill ok">Có</span></td></tr>
+      <tr><td>Công cụ ESP đã biết chạy song song, hoặc tên có từ khoá như <code>wallhack</code></td><td>ProcessScanner, ProcessInventoryScanner; FileScanner và Prefetch nếu đã tắt</td><td><span class="pill ok">Có, theo tên</span></td></tr>
+      <tr><td>DLL ESP inject vào game</td><td>ModuleScanner</td><td><span class="pill plan">Tắt mặc định; EAC có thể chặn việc đọc</span></td></tr>
+      <tr><td>Overlay ESP vẽ đè bằng cửa sổ trong suốt</td><td>OverlayScanner</td><td><span class="pill plan">Đã viết, chưa nối</span></td></tr>
+      <tr><td>Chỉnh file cấu hình của game (<code>Engine.ini</code>, <code>GameUserSettings.ini</code>…) để bớt sương mù, cỏ</td><td>—</td><td><span class="pill no">Chưa có</span></td></tr>
+      <tr><td>Cheat kernel, thẻ DMA, cheat chạy trên máy khác</td><td>—</td><td><span class="pill no">Ngoài tầm user-mode</span></td></tr>
+    </tbody>
+  </table>
+</section>
+
+</body>
+</html>

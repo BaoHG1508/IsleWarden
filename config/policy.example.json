@@ -1,0 +1,31 @@
+{
+  "mode": "observe",
+  "intervalSeconds": 30,
+  "disclosureVersion": "iw-v1",
+  "disclosure": "Server nay dung IsleWarden de phat hien phan mem gian lan. Khi ban ket noi, launcher kiem tra tien trinh dang chay, cac DLL nap vao game va tinh toan ven file game. Ban dong y viec nay khi choi tren server.",
+  "gameProcessName": "TheIsleClient-Win64-Shipping",
+  "steamAppId": "376210",
+  "launchUri": "steam://rungameid/376210",
+  "blockedProcesses": [
+    { "name": "cheatengine-x86_64", "reason": "Cheat Engine", "severity": "high" },
+    { "name": "cheatengine-i386", "reason": "Cheat Engine", "severity": "high" },
+    { "name": "artmoney", "reason": "ArtMoney memory editor", "severity": "high" },
+    { "name": "xenos64", "reason": "Xenos DLL injector", "severity": "high" },
+    { "name": "extremeinjector", "reason": "Extreme Injector", "severity": "high" },
+    { "name": "x64dbg", "reason": "Debugger (dung chung, can xem xet)", "severity": "medium" }
+  ],
+  "protectedFiles": [
+    { "path": "{GameDir}\\TheIsle.exe", "requireSignature": false }
+  ],
+  "startupOrder": {
+    "enabled": true,
+    "severity": "medium",
+    "toleranceSeconds": 5
+  },
+  "moduleScan": {
+    "enabled": false,
+    "blockedModules": [],
+    "suspiciousPaths": ["%TEMP%", "\\Downloads\\"],
+    "suspiciousSeverity": "medium"
+  }
+}

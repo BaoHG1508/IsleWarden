@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Thông báo chống gian lận</title>
+<style>
+  :root { color-scheme: light dark; --bg:#0f1720; --card:#18232f; --ink:#e7eef5; --muted:#9fb0c0; --brand:#39b3c6; --line:#294050; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: "Segoe UI", system-ui, sans-serif; background:var(--bg); color:var(--ink); line-height:1.6; }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 32px 20px 60px; }
+  header { display:flex; align-items:center; gap:12px; margin-bottom:8px; }
+  header svg { width:34px; height:34px; flex:none; }
+  h1 { font-size: 22px; margin: 0; }
+  .ver { color:var(--muted); font-size:13px; margin-bottom:24px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:18px 20px; margin-bottom:16px; }
+  .card h2 { font-size:15px; margin:0 0 10px; color:var(--brand); letter-spacing:.3px; }
+  .disclosure { font-size:15px; white-space:pre-wrap; }
+  ul { margin:8px 0 0; padding-left:20px; } li { margin:4px 0; }
+  .yes li::marker { content:"✓ "; } .no li::marker { content:"✕ "; }
+  .no li { color:var(--muted); }
+  footer { color:var(--muted); font-size:12.5px; margin-top:24px; }
+  code { background:#0b1219; padding:1px 6px; border-radius:5px; font-size:13px; }
+  .err { color:#e58; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1.6 20.6 4.9v6.3c0 5.6-3.6 9.9-8.6 11.3-5-1.4-8.6-5.7-8.6-11.3V4.9Z" fill="none" stroke="#39b3c6" stroke-width="1.6" stroke-linejoin="round"/><path d="M8.6 10.6 10.9 12.9 15.6 8.2" fill="none" stroke="#e7eef5" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <h1>Thông báo chống gian lận</h1>
+  </header>
+  <div class="ver" id="version">Đang tải…</div>
+
+  <div class="card">
+    <h2>NỘI DUNG THÔNG BÁO</h2>
+    <div class="disclosure" id="disclosure">…</div>
+  </div>
+
+  <div class="card">
+    <h2>LAUNCHER KIỂM TRA NHỮNG GÌ</h2>
+    <ul class="yes">
+      <li><b>Tên</b> các phần mềm đang chạy trên máy bạn, gửi về server để đối chiếu với công cụ gian lận đã biết.</li>
+      <li>Sự tồn tại của một danh sách file công cụ gian lận đã biết, trong Downloads, Desktop, Temp và thư mục game. Chỉ so tên file.</li>
+      <li>Tính toàn vẹn (hash + chữ ký số) của các file game được chỉ định.</li>
+      <li>Một mã định danh máy (đã băm) để phục vụ chống lách ban.</li>
+      <li id="execution-history" hidden>Nhật ký thực thi của Windows trong <b id="lookback-days">7</b> ngày gần nhất,
+        chỉ để xem các công cụ gian lận trong danh sách công bố có từng chạy trên máy hay không.
+        Tên các phần mềm khác trong nhật ký không được đọc tới và không gửi về server.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>LAUNCHER KHÔNG LÀM</h2>
+    <ul class="no">
+      <li>Không mở hay đọc <b>nội dung</b> tài liệu, hình ảnh, file cá nhân của bạn.</li>
+      <li>Không chụp màn hình, không ghi bàn phím, không đọc lịch sử duyệt web.</li>
+      <li>Không gửi đường dẫn, tham số dòng lệnh hay tiêu đề cửa sổ của phần mềm đang chạy.</li>
+      <li>Không xoá, sửa hay tắt bất cứ thứ gì trên máy bạn.</li>
+    </ul>
+  </div>
+
+  <footer>
+    Chỉ áp dụng khi bạn kết nối vào server dùng launcher này. Server chỉ lưu dữ liệu tối thiểu cần
+    để quyết định cho vào, dưới dạng hash. Khiếu nại nếu bị chặn nhầm: liên hệ admin qua Discord của server.
+  </footer>
+</div>
+
+<script>
+  fetch("/api/policy").then(r => r.json()).then(env => {
+    const p = env.policy || {};
+    document.getElementById("version").textContent = "Phiên bản thông báo: " + (p.disclosureVersion || "?");
+    document.getElementById("disclosure").textContent = p.disclosure || "(Server chưa cấu hình nội dung thông báo.)";
+
+    var history = p.executionHistory || {};
+    if (history.enabled) {
+      document.getElementById("lookback-days").textContent = history.lookbackDays || 7;
+      document.getElementById("execution-history").hidden = false;
+    }
+  }).catch(() => {
+    document.getElementById("version").textContent = "";
+    document.getElementById("disclosure").innerHTML = '<span class="err">Không tải được thông báo từ server.</span>';
+  });
+</script>
+</body>
+</html>

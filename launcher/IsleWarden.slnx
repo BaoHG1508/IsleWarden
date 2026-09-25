@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="IsleWarden.Agent/IsleWarden.Agent.csproj" />
+  <Project Path="IsleWarden.Core/IsleWarden.Core.csproj" />
+  <Project Path="IsleWarden.Core.Tests/IsleWarden.Core.Tests.csproj" />
+</Solution>

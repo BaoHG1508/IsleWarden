@@ -1,0 +1,32 @@
+# Build output
+bin/
+obj/
+dist/
+.vs/
+*.user
+node_modules/
+
+# Runtime data. The SQLite database holds player data (devices, bans, scan reports).
+*.db
+*.db-shm
+*.db-wal
+/data/
+server/data/
+
+# Python server: virtual environment and caches
+server/.venv/
+__pycache__/
+.pytest_cache/
+*.egg-info/
+
+# Local working copy of config/policy.example.json (see README, Quick start)
+/policy.json
+
+# Code-signing certificates
+*.pfx
+*.p12
+
+# Notes analysing a third-party launcher, including excerpts of its code. Kept out of the public
+# repository on purpose; remove these lines only if you are sure you may publish them.
+docs/AC-DETECTION-REFERENCE.md
+docs/ACCESS-CONTROL-REFERENCE.md

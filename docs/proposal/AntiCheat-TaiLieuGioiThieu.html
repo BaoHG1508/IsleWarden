@@ -1,0 +1,1106 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Hệ thống chống gian lận cho server The Isle EVRIMA</title>
+<style>
+  @page {
+    size: A4;
+    margin: 16mm 16mm 17mm 16mm;
+    @bottom-left {
+      content: "Hệ thống chống gian lận cho server The Isle EVRIMA";
+      font-family: "Segoe UI", sans-serif; font-size: 7.5pt; color: #8A97A5;
+    }
+    @bottom-right {
+      content: "Trang " counter(page) " / " counter(pages);
+      font-family: "Segoe UI", sans-serif; font-size: 7.5pt; color: #8A97A5;
+    }
+  }
+  @page :first {
+    margin: 0;
+    @bottom-left { content: none; }
+    @bottom-right { content: none; }
+  }
+
+  :root {
+    --ink: #16212C;
+    --ink-2: #34424F;
+    --muted: #677786;
+    --line: #DCE3EA;
+    --soft: #F3F6F9;
+    --navy: #0B2A3A;
+    --brand: #0F5B6B;
+    --brand-2: #127C8C;
+    --brand-soft: #E6F2F4;
+    --ok: #2F8F5B;
+    --ok-soft: #E7F4EC;
+    --warn: #C98A0B;
+    --warn-ink: #8F6300;
+    --warn-soft: #FBF3E2;
+    --danger: #B83A2E;
+    --danger-soft: #F9E9E7;
+    --plan: #4A6FA5;
+    --plan-soft: #EAF0F8;
+    --gray: #8A98A6;
+    --font: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+    --font-display: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+    --mono: "Cascadia Mono", Consolas, monospace;
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: var(--font);
+    font-size: 10pt;
+    line-height: 1.55;
+    color: var(--ink);
+    background: #fff;
+  }
+
+  /* ---------- Typography ---------- */
+  h1 {
+    font-family: var(--font-display);
+    font-size: 18.5pt;
+    font-weight: 700;
+    color: var(--navy);
+    letter-spacing: -0.2pt;
+    line-height: 1.25;
+    margin: 0 0 10pt;
+    padding-bottom: 7pt;
+    border-bottom: 1.2pt solid var(--line);
+    display: flex;
+    align-items: center;
+    gap: 9pt;
+    break-after: avoid;
+  }
+  h1 .num {
+    font-size: 10pt;
+    font-weight: 700;
+    color: var(--brand);
+    background: var(--brand-soft);
+    padding: 2pt 7pt;
+    border-radius: 5pt;
+    letter-spacing: 0.5pt;
+  }
+  h2 {
+    font-family: var(--font-display);
+    font-size: 12.5pt;
+    font-weight: 650;
+    color: var(--navy);
+    margin: 13pt 0 5pt;
+    break-after: avoid;
+  }
+  h3 {
+    font-size: 10.5pt;
+    font-weight: 700;
+    color: var(--navy);
+    margin: 10pt 0 4pt;
+    break-after: avoid;
+  }
+  p { margin: 0 0 7pt; orphans: 3; widows: 3; }
+  .lead { font-size: 11pt; line-height: 1.6; color: var(--ink-2); }
+  .muted { color: var(--muted); }
+  .small { font-size: 8.8pt; }
+  b, strong { font-weight: 650; color: var(--navy); }
+  ul, ol { margin: 0 0 8pt; padding-left: 16pt; }
+  li { margin: 0 0 3pt; }
+  section { margin-bottom: 16pt; }
+  .pb { break-before: page; }
+  .keep { break-inside: avoid; }
+
+  code, .mono { font-family: var(--mono); font-size: 0.88em; }
+  .chip {
+    font-family: var(--mono);
+    font-size: 8.2pt;
+    background: var(--soft);
+    border: 1px solid var(--line);
+    padding: 0.5pt 5pt;
+    border-radius: 4pt;
+    white-space: nowrap;
+    color: var(--ink-2);
+  }
+  .chip.high { background: var(--danger-soft); border-color: #EFC9C4; color: var(--danger); }
+  .chip.medium { background: var(--warn-soft); border-color: #EFDDB5; color: var(--warn-ink); }
+  .chip.low { background: var(--plan-soft); border-color: #CCD9EC; color: var(--plan); }
+
+  .sev {
+    display: inline-block;
+    font-size: 7.2pt;
+    font-weight: 700;
+    padding: 1pt 6pt;
+    border-radius: 10pt;
+    text-transform: uppercase;
+    letter-spacing: 0.4pt;
+    white-space: nowrap;
+  }
+  .sev.high { background: var(--danger-soft); color: var(--danger); }
+  .sev.medium { background: var(--warn-soft); color: var(--warn-ink); }
+  .sev.low { background: var(--plan-soft); color: var(--plan); }
+  .sev.rule { background: var(--soft); color: var(--muted); }
+
+  .pill {
+    display: inline-block;
+    font-size: 7.5pt;
+    font-weight: 700;
+    padding: 1.5pt 7pt;
+    border-radius: 10pt;
+    letter-spacing: 0.3pt;
+    white-space: nowrap;
+  }
+  .pill.ok { background: var(--ok); color: #fff; }
+  .pill.plan { background: var(--plan-soft); color: var(--plan); }
+  .pill.key { background: var(--danger); color: #fff; }
+  .pill.gray { background: var(--soft); color: var(--muted); }
+
+  /* ---------- Tables ---------- */
+  table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 9pt;
+    line-height: 1.45;
+    margin: 6pt 0 11pt;
+  }
+  thead th {
+    background: var(--navy);
+    color: #fff;
+    text-align: left;
+    font-weight: 600;
+    font-size: 8.4pt;
+    padding: 5.5pt 8pt;
+    letter-spacing: 0.2pt;
+  }
+  thead th:first-child { border-top-left-radius: 6pt; }
+  thead th:last-child { border-top-right-radius: 6pt; }
+  tbody td {
+    padding: 5pt 8pt;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+  }
+  tbody tr:nth-child(even) td { background: #F8FAFC; }
+  tr { break-inside: avoid; }
+  td.nowrap, th.nowrap { white-space: nowrap; }
+  td .sub { display: block; color: var(--muted); font-size: 8.3pt; }
+
+  /* ---------- Cards / callouts ---------- */
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 9pt; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9pt; }
+  .grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8pt; }
+
+  .card {
+    border: 1px solid var(--line);
+    border-radius: 8pt;
+    padding: 10pt 11pt;
+    background: #fff;
+    break-inside: avoid;
+  }
+  .card p { margin: 0; font-size: 9.4pt; color: var(--ink-2); }
+  .card-k {
+    font-size: 7.8pt;
+    font-weight: 700;
+    letter-spacing: 1pt;
+    text-transform: uppercase;
+    color: var(--brand);
+    margin-bottom: 4pt;
+  }
+  .card.top-brand { border-top: 3pt solid var(--brand); }
+  .card.top-ok { border-top: 3pt solid var(--ok); }
+  .card.top-danger { border-top: 3pt solid var(--danger); }
+
+  .stat {
+    background: var(--soft);
+    border-radius: 8pt;
+    padding: 10pt 10pt 9pt;
+    break-inside: avoid;
+  }
+  .stat-v {
+    font-family: var(--font-display);
+    font-size: 19pt;
+    font-weight: 700;
+    color: var(--brand);
+    line-height: 1.1;
+  }
+  .stat-l { font-size: 8.4pt; color: var(--muted); margin-top: 4pt; line-height: 1.35; }
+
+  .callout {
+    border-left: 3pt solid var(--brand);
+    background: var(--brand-soft);
+    padding: 9pt 12pt;
+    border-radius: 0 8pt 8pt 0;
+    break-inside: avoid;
+    margin: 9pt 0 11pt;
+  }
+  .callout p:last-child, .callout ol:last-child, .callout ul:last-child { margin-bottom: 0; }
+  .callout.warn { border-color: var(--warn); background: var(--warn-soft); }
+  .callout.gray { border-color: var(--gray); background: var(--soft); }
+  .callout-t {
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 4pt;
+    font-size: 10pt;
+  }
+
+  /* ---------- Figures ---------- */
+  figure { margin: 6pt 0 10pt; break-inside: avoid; }
+  figure svg { width: 100%; height: auto; display: block; }
+  figcaption { font-size: 8.4pt; color: var(--muted); margin-top: 6pt; line-height: 1.45; }
+  figcaption b { color: var(--ink-2); }
+
+  svg text { font-family: var(--font); }
+  .zl { font-size: 10px; font-weight: 700; letter-spacing: 1.2px; fill: #6B7B8A; }
+  .t1 { font-size: 13.5px; font-weight: 700; fill: #0B2A3A; }
+  .t1s { font-size: 12.5px; font-weight: 700; fill: #0B2A3A; }
+  .t2 { font-size: 11.5px; fill: #34424F; }
+  .t2b { font-size: 11.5px; font-weight: 700; fill: #0F5B6B; }
+  .t3 { font-size: 10.5px; fill: #677786; }
+  .t3i { font-size: 10.5px; fill: #677786; font-style: italic; }
+  .tm { font-size: 9.5px; fill: #677786; font-family: var(--mono); }
+  .tmb { font-size: 11px; font-weight: 700; fill: #0B2A3A; font-family: var(--mono); }
+  .tag { font-size: 9.5px; font-weight: 700; fill: #fff; text-anchor: middle; }
+  .lbl { font-size: 10.8px; fill: #34424F; }
+  .bt { font-size: 9px; font-weight: 700; fill: #fff; text-anchor: middle; }
+  .hd { font-size: 11.5px; font-weight: 700; fill: #fff; text-anchor: middle; }
+  .fr { font-size: 8.8px; font-weight: 700; fill: #fff; letter-spacing: 0.6px; }
+  .cp { font-size: 9px; font-family: var(--mono); }
+
+  /* ---------- Code ---------- */
+  pre.code {
+    font-family: var(--mono);
+    font-size: 8pt;
+    line-height: 1.45;
+    background: #F6F8FA;
+    border: 1px solid var(--line);
+    color: #22303C;
+    padding: 8pt 11pt;
+    border-radius: 7pt;
+    white-space: pre-wrap;
+    word-break: break-word;
+    margin: 4pt 0 10pt;
+    break-inside: avoid;
+  }
+  .code-label {
+    font-size: 8.4pt;
+    font-weight: 700;
+    color: var(--ink-2);
+    margin-top: 8pt;
+    display: flex;
+    align-items: center;
+    gap: 6pt;
+    break-after: avoid;
+  }
+  .jk { color: #0F5B6B; }
+  .js { color: #9A5B13; }
+  .jn { color: #2F7D4F; }
+  .jc { color: #8A97A5; font-style: italic; }
+
+  /* ---------- Steps ---------- */
+  .steps { margin: 6pt 0 10pt; border: 1px solid var(--line); border-radius: 8pt; overflow: hidden; break-inside: avoid; }
+  .step {
+    display: grid;
+    grid-template-columns: 22pt 1fr 112pt;
+    gap: 10pt;
+    padding: 7pt 11pt;
+    break-inside: avoid;
+  }
+  .step + .step { border-top: 1px solid var(--line); }
+  .step-n {
+    width: 19pt; height: 19pt;
+    border-radius: 50%;
+    background: var(--brand);
+    color: #fff;
+    font-weight: 700;
+    font-size: 9pt;
+    display: flex; align-items: center; justify-content: center;
+    margin-top: 1pt;
+  }
+  .step h4 { margin: 0 0 2pt; font-size: 10pt; color: var(--navy); font-weight: 700; }
+  .step p { margin: 0; font-size: 9.2pt; color: var(--ink-2); line-height: 1.5; }
+  .step-out {
+    display: flex; flex-direction: column; gap: 4pt; align-items: flex-start;
+    padding-top: 2pt; border-left: 1px dashed var(--line); padding-left: 10pt;
+  }
+  .out { display: flex; align-items: center; gap: 5pt; flex-wrap: wrap; }
+  .out-note { font-size: 8.4pt; color: var(--muted); }
+
+  /* ---------- Lists with icons ---------- */
+  .ilist { list-style: none; padding: 0; margin: 0; }
+  .ilist li { display: flex; gap: 7pt; align-items: flex-start; margin-bottom: 6pt; font-size: 9.4pt; color: var(--ink-2); }
+  .ic { width: 12pt; height: 12pt; flex: none; margin-top: 1.5pt; }
+  .ic.ok circle { fill: var(--ok); }
+  .ic.no circle { fill: var(--danger); }
+
+  /* ---------- Principles ---------- */
+  .pr { display: flex; gap: 10pt; }
+  .card.pr { padding: 9pt 11pt; }
+  .pr-n {
+    flex: none;
+    width: 24pt; height: 24pt;
+    border-radius: 7pt;
+    background: var(--brand-soft);
+    color: var(--brand);
+    font-weight: 800;
+    font-size: 11pt;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .pr h4 { margin: 0 0 3pt; font-size: 10.3pt; color: var(--navy); }
+
+  /* ---------- Cover ---------- */
+  .cover {
+    width: 210mm;
+    height: 296.5mm;
+    position: relative;
+    overflow: hidden;
+    break-after: page;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+  }
+  .cover-band {
+    position: relative;
+    background: linear-gradient(140deg, #0A2533 0%, #0E4757 52%, #137F8E 100%);
+    color: #fff;
+    padding: 20mm 20mm 17mm;
+    height: 158mm;
+    overflow: hidden;
+  }
+  .cover-shield { position: absolute; right: -16mm; top: 14mm; width: 118mm; height: auto; opacity: 0.10; }
+  .brand { display: flex; align-items: center; gap: 8pt; font-family: var(--font-display); font-weight: 700; font-size: 14pt; letter-spacing: 0.3pt; }
+  .brand svg { width: 22pt; height: 22pt; }
+  .eyebrow {
+    margin-top: 40mm;
+    font-size: 8.8pt;
+    letter-spacing: 1.8pt;
+    text-transform: uppercase;
+    color: #A8DCE3;
+    font-weight: 600;
+  }
+  .cover-title {
+    font-family: var(--font-display);
+    font-size: 31pt;
+    line-height: 1.14;
+    font-weight: 700;
+    letter-spacing: -0.4pt;
+    margin: 7pt 0 11pt;
+    color: #fff;
+  }
+  .cover-lead { font-size: 12pt; line-height: 1.5; color: #D3E9EE; max-width: 132mm; margin: 0; }
+  .cover-body {
+    flex: 1;
+    padding: 14mm 20mm 0;
+    display: grid;
+    grid-template-columns: 0.9fr 1.1fr;
+    gap: 14mm;
+  }
+  .meta { display: flex; flex-direction: column; gap: 10pt; }
+  .meta .k { display: block; font-size: 7.8pt; letter-spacing: 1pt; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  .meta .v { display: block; font-size: 10.5pt; color: var(--navy); font-weight: 600; margin-top: 1pt; }
+  .toc-t { font-size: 7.8pt; letter-spacing: 1pt; text-transform: uppercase; color: var(--muted); font-weight: 600; margin-bottom: 6pt; }
+  .toc ol { list-style: none; padding: 0; margin: 0; counter-reset: toc; }
+  .toc li {
+    counter-increment: toc;
+    display: flex; gap: 8pt;
+    padding: 3.2pt 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 9.6pt;
+    margin: 0;
+  }
+  .toc li::before {
+    content: counter(toc, decimal-leading-zero);
+    color: var(--brand); font-weight: 700; width: 16pt; flex: none;
+  }
+  .toc a { color: var(--ink); text-decoration: none; }
+  .cover-foot {
+    padding: 0 20mm 12mm;
+    font-size: 8pt;
+    color: var(--muted);
+  }
+  .cover-foot div { border-top: 1px solid var(--line); padding-top: 7pt; }
+</style>
+</head>
+<body>
+
+<!-- ============================ COVER ============================ -->
+<div class="cover">
+  <div class="cover-band">
+    <svg class="cover-shield" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 1.6 20.6 4.9v6.3c0 5.6-3.6 9.9-8.6 11.3-5-1.4-8.6-5.7-8.6-11.3V4.9Z" fill="#fff"/>
+    </svg>
+    <div class="brand">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 1.6 20.6 4.9v6.3c0 5.6-3.6 9.9-8.6 11.3-5-1.4-8.6-5.7-8.6-11.3V4.9Z" fill="none" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/>
+        <path d="M7.4 14.2c1.5-1.1 3-1.1 4.6 0s3.1 1.1 4.6 0" fill="none" stroke="#7FD3DD" stroke-width="1.6" stroke-linecap="round"/>
+        <path d="M8.6 10.6 10.9 12.9 15.6 8.2" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="eyebrow">Tài liệu giới thiệu hệ thống · Đề xuất triển khai</div>
+    <div class="cover-title">Hệ thống chống gian lận<br>cho server The Isle EVRIMA</div>
+    <p class="cover-lead">Kiến trúc, cách hệ thống phát hiện gian lận và đề xuất triển khai cho server.</p>
+  </div>
+
+  <div class="cover-body">
+    <div class="meta">
+      <div><span class="k">Phiên bản tài liệu</span><span class="v">1.1</span></div>
+      <div><span class="k">Ngày lập</span><span class="v">25/09/2026</span></div>
+      <div><span class="k">Nền tảng</span><span class="v">.NET 10 · C# · Windows</span></div>
+    </div>
+    <div class="toc">
+      <div class="toc-t">Nội dung</div>
+      <ol>
+        <li><a href="#s1">Tóm tắt tổng quan</a></li>
+        <li><a href="#s2">Bối cảnh và vấn đề</a></li>
+        <li><a href="#s3">Tổng quan giải pháp</a></li>
+        <li><a href="#s4">Nguyên tắc thiết kế</a></li>
+        <li><a href="#s5">Cách hệ thống hoạt động</a></li>
+        <li><a href="#s6">Cấu hình bằng chính sách</a></li>
+        <li><a href="#s7">Báo cáo quét và mã phát hiện</a></li>
+        <li><a href="#s8">Minh bạch và quyền riêng tư</a></li>
+        <li><a href="#s9">Giới hạn và quản trị rủi ro</a></li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="cover-foot"><div>Tài liệu đề xuất · Hệ thống chỉ triển khai trên hạ tầng do admin server quản lý.</div></div>
+</div>
+
+<!-- ============================ 1. TÓM TẮT ============================ -->
+<section>
+  <h1 id="s1"><span class="num">01</span>Tóm tắt tổng quan</h1>
+  <p class="lead">Đây là hệ thống chống gian lận do tôi phát triển cho server The Isle EVRIMA. Hệ thống gồm một <b>launcher chạy trên máy người chơi</b> và một <b>dịch vụ phía server</b> quản lý quyền vào: người chơi chỉ được vào và ở lại server khi máy của họ vượt qua kiểm tra.</p>
+
+  <div class="grid3" style="margin: 12pt 0;">
+    <div class="card top-danger">
+      <div class="card-k" style="color: var(--danger);">Vấn đề</div>
+      <p>Phần mềm gian lận (sửa bộ nhớ, tiêm DLL) làm hỏng trải nghiệm và uy tín server, trong khi The Isle EVRIMA gần như không cho phía server kiểm tra máy người chơi qua mạng.</p>
+    </div>
+    <div class="card top-brand">
+      <div class="card-k">Giải pháp</div>
+      <p>Launcher bắt buộc kiểm tra tiến trình và file game trước và trong khi chơi, rồi báo về server. Server chỉ đưa người chơi “sạch” vào whitelist; vi phạm hoặc mất tín hiệu thì gỡ ra.</p>
+    </div>
+    <div class="card top-ok">
+      <div class="card-k" style="color: var(--ok);">Cách kiểm tra</div>
+      <p>Quét tiến trình theo danh sách cấm, soi DLL nạp vào game, kiểm tra toàn vẹn file game (SHA-256 + chữ ký số), tìm công cụ gian lận đã biết trên máy, và đối chiếu nhật ký thực thi của Windows để thấy cả công cụ đã tắt trước khi mở launcher.</p>
+    </div>
+  </div>
+
+  <div class="grid4" style="margin: 0 0 12pt;">
+    <div class="stat"><div class="stat-v">5</div><div class="stat-l">công cụ gian lận phổ biến đã có luật chặn mẫu</div></div>
+    <div class="stat"><div class="stat-v">12</div><div class="stat-l">loại phát hiện được chuẩn hoá thành mã</div></div>
+    <div class="stat"><div class="stat-v">~0,12 s</div><div class="stat-l">cho một lần quét đầy đủ (đo thực tế)</div></div>
+    <div class="stat"><div class="stat-v">0</div><div class="stat-l">thay đổi trên máy người chơi, chặn chỉ ở cấp server</div></div>
+  </div>
+
+</section>
+
+<!-- ============================ 2. BỐI CẢNH ============================ -->
+<section class="pb">
+  <h1 id="s2"><span class="num">02</span>Bối cảnh và vấn đề</h1>
+
+  <p>Các công cụ gian lận phổ biến trên game PC thường thuộc ba nhóm:</p>
+  <table>
+    <thead><tr><th style="width: 24%;">Nhóm công cụ</th><th style="width: 26%;">Ví dụ</th><th>Cách hoạt động</th></tr></thead>
+    <tbody>
+      <tr><td><b>Trình sửa bộ nhớ</b></td><td>Cheat Engine, ArtMoney</td><td>Đọc và sửa trực tiếp giá trị trong bộ nhớ của game đang chạy.</td></tr>
+      <tr><td><b>Công cụ tiêm DLL</b></td><td>Xenos, Extreme Injector</td><td>Nạp mã lạ vào tiến trình game để thêm tính năng gian lận.</td></tr>
+      <tr><td><b>Trình gỡ lỗi (debugger)</b></td><td>x64dbg</td><td>Công cụ lập trình hợp pháp, nhưng cũng được dùng để phân tích và can thiệp game, cần xem xét theo ngữ cảnh.</td></tr>
+    </tbody>
+  </table>
+  <p>Hậu quả là người chơi chân chính rời server, đội admin tốn thời gian xử lý những tố cáo thiếu bằng chứng, và uy tín của cộng đồng bị ảnh hưởng.</p>
+
+</section>
+
+<!-- ============================ 3. TỔNG QUAN GIẢI PHÁP ============================ -->
+<section>
+  <h1 id="s3"><span class="num">03</span>Tổng quan giải pháp</h1>
+  <p>Hệ thống gồm hai tầng bổ sung cho nhau: tầng phía server cho độ tin cậy cao, và tầng phía người chơi (launcher) để thấy được những gì server không thấy.</p>
+  <table>
+    <thead><tr><th style="width: 22%;">Tầng</th><th style="width: 24%;">Chạy ở đâu</th><th style="width: 30%;">Dữ liệu chạm tới</th><th>Độ tin cậy</th></tr></thead>
+    <tbody>
+      <tr><td><b>Phía server</b></td><td>Máy chủ/VPS do admin quản lý</td><td>Log và trạng thái của chính server</td><td>Cao, không gây tranh cãi</td></tr>
+      <tr><td><b>Phía người chơi</b> (launcher)</td><td>Máy người chơi, tự nguyện tham gia</td><td>Tiến trình và file game trên máy họ, có sự đồng ý</td><td>Trung bình, ứng dụng thông thường có thể bị qua mặt</td></tr>
+    </tbody>
+  </table>
+
+  <figure>
+    <svg viewBox="0 0 680 384" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Kiến trúc tổng thể">
+      <defs>
+        <marker id="f1-plan" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#4A6FA5"/></marker>
+        <marker id="f1-gray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#8A98A6"/></marker>
+      </defs>
+
+      <!-- Zones -->
+      <rect x="6" y="8" width="226" height="346" rx="14" fill="#F4F7FA" stroke="#CBD5DF" stroke-dasharray="4 4"/>
+      <text x="20" y="30" class="zl">MÁY NGƯỜI CHƠI</text>
+      <rect x="346" y="8" width="328" height="346" rx="14" fill="#F4F7FA" stroke="#CBD5DF" stroke-dasharray="4 4"/>
+      <text x="360" y="30" class="zl">HẠ TẦNG DO ADMIN QUẢN LÝ</text>
+
+      <!-- Agent -->
+      <rect x="20" y="42" width="198" height="168" rx="10" fill="#fff" stroke="#2F8F5B" stroke-width="1.6"/>
+      <text x="34" y="68" class="t1">Launcher (Agent)</text>
+      <text x="34" y="86" class="t3">Chạy trên máy người chơi</text>
+      <rect x="32" y="98" width="174" height="100" rx="8" fill="#E6F2F4"/>
+      <text x="44" y="118" class="t2b">Core · module phát hiện</text>
+      <text x="44" y="139" class="t2">• Quét tiến trình cấm</text>
+      <text x="44" y="159" class="t2">• Kiểm tra file game</text>
+      <text x="44" y="179" class="t2">• Xuất báo cáo JSON</text>
+
+      <!-- Game client -->
+      <rect x="20" y="266" width="198" height="74" rx="10" fill="#fff" stroke="#AEBBC7" stroke-width="1.2"/>
+      <text x="34" y="294" class="t1s">The Isle (game client)</text>
+      <text x="34" y="314" class="t3">Được mở thông qua launcher</text>
+      <line x1="119" y1="211" x2="119" y2="262" stroke="#4A6FA5" stroke-width="1.5" marker-end="url(#f1-plan)"/>
+      <text x="128" y="241" class="lbl">mở game</text>
+
+      <!-- Server -->
+      <rect x="362" y="42" width="298" height="168" rx="10" fill="#fff" stroke="#4A6FA5" stroke-width="1.6"/>
+      <text x="376" y="68" class="t1">Dịch vụ anti-cheat</text>
+      <text x="376" y="86" class="t3">ASP.NET minimal API · SQLite</text>
+      <text x="376" y="116" class="t2">• Cấp token ngắn hạn</text>
+      <text x="376" y="140" class="t2">• Whitelist Steam ID</text>
+      <text x="376" y="164" class="t2">• Phân phối policy</text>
+      <text x="522" y="116" class="t2">• Nhận báo cáo quét</text>
+      <text x="522" y="140" class="t2">• Quản lý ban list</text>
+      <text x="522" y="164" class="t2">• Đẩy cảnh báo</text>
+      <text x="376" y="195" class="t3i">Chạy trên máy chủ/VPS do admin quản lý</text>
+
+      <!-- Dedicated server -->
+      <rect x="362" y="266" width="184" height="74" rx="10" fill="#fff" stroke="#AEBBC7" stroke-width="1.2"/>
+      <text x="376" y="292" class="t1s">Server game The Isle</text>
+      <text x="376" y="311" class="t3">Dedicated server hiện có</text>
+      <text x="376" y="327" class="t3">chỉ cho whitelist vào</text>
+      <rect x="484" y="257" width="54" height="18" rx="9" fill="#8A98A6"/>
+      <text x="511" y="270" class="tag">Hiện có</text>
+
+      <!-- Discord -->
+      <rect x="562" y="266" width="98" height="74" rx="10" fill="#fff" stroke="#4A6FA5" stroke-width="1.6"/>
+      <text x="576" y="292" class="t1s">Discord</text>
+      <text x="576" y="311" class="t3">kênh admin</text>
+      <text x="576" y="327" class="t3">nhận cảnh báo</text>
+
+      <!-- Server -> game server / discord -->
+      <line x1="454" y1="211" x2="454" y2="253" stroke="#4A6FA5" stroke-width="1.5" marker-end="url(#f1-plan)"/>
+      <text x="462" y="237" class="lbl">whitelist / RCON</text>
+      <line x1="611" y1="211" x2="611" y2="253" stroke="#4A6FA5" stroke-width="1.5" marker-end="url(#f1-plan)"/>
+
+      <!-- Agent <-> Server -->
+      <line x1="220" y1="100" x2="357" y2="100" stroke="#4A6FA5" stroke-width="1.5" marker-end="url(#f1-plan)"/>
+      <circle cx="238" cy="89" r="8" fill="#4A6FA5"/><text x="238" y="92.2" class="bt">1</text>
+      <text x="251" y="93" class="lbl">Đăng nhập + báo cáo</text>
+
+      <line x1="223" y1="140" x2="360" y2="140" stroke="#4A6FA5" stroke-width="1.5" marker-start="url(#f1-plan)"/>
+      <circle cx="238" cy="129" r="8" fill="#4A6FA5"/><text x="238" y="132.2" class="bt">2</text>
+      <text x="251" y="133" class="lbl">Token ngắn hạn</text>
+
+      <line x1="220" y1="180" x2="357" y2="180" stroke="#4A6FA5" stroke-width="1.5" marker-end="url(#f1-plan)"/>
+      <circle cx="238" cy="169" r="8" fill="#4A6FA5"/><text x="238" y="172.2" class="bt">3</text>
+      <text x="251" y="173" class="lbl">Heartbeat định kỳ</text>
+
+      <!-- Game client -> game server -->
+      <line x1="220" y1="303" x2="357" y2="303" stroke="#8A98A6" stroke-width="1.5" marker-end="url(#f1-gray)"/>
+      <text x="236" y="295" class="lbl">kết nối chơi game</text>
+
+      <!-- Legend -->
+      <rect x="8" y="365" width="12" height="12" rx="3" fill="#2F8F5B"/>
+      <text x="26" y="375" class="t3">Thành phần của hệ thống</text>
+      <rect x="180" y="365" width="12" height="12" rx="3" fill="#8A98A6"/>
+      <text x="198" y="375" class="t3">Hệ thống sẵn có của server</text>
+    </svg>
+    <figcaption><b>Hình 1.</b> Kiến trúc tổng thể của hệ thống. Launcher chạy trên máy người chơi, dịch vụ anti-cheat chạy trên hạ tầng do admin quản lý.</figcaption>
+  </figure>
+
+  <table class="keep">
+    <thead><tr><th style="width: 26%;">Thành phần</th><th>Vai trò</th></tr></thead>
+    <tbody>
+      <tr><td><b>Core</b></td><td>Thư viện chứa các module phát hiện; thuần logic, dễ kiểm thử, không phụ thuộc giao diện hay mạng.</td></tr>
+      <tr><td><b>Agent (launcher)</b></td><td>Ứng dụng phía người chơi: đọc policy, quét theo chu kỳ, xin token và gửi heartbeat khi chơi.</td></tr>
+      <tr><td><b>Dịch vụ anti-cheat</b></td><td>API cấp token, quản lý whitelist và ban list, nhận báo cáo quét, đẩy cảnh báo.</td></tr>
+      <tr><td><b>Cảnh báo admin</b></td><td>Cảnh báo cho admin qua Discord, log tập trung.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============================ 4. NGUYÊN TẮC ============================ -->
+<section class="keep">
+  <h1 id="s4"><span class="num">04</span>Nguyên tắc thiết kế</h1>
+  <p>Bốn nguyên tắc dưới đây định hình mọi quyết định kỹ thuật của hệ thống, đồng thời là cam kết với người chơi:</p>
+  <div class="grid2">
+    <div class="card pr">
+      <div class="pr-n">1</div>
+      <div><h4>Chỉ trên hạ tầng của server</h4><p>Chỉ triển khai trên server, API và whitelist do admin quản lý. Máy người chơi chỉ được kiểm tra khi họ tự nguyện dùng launcher.</p></div>
+    </div>
+    <div class="card pr">
+      <div class="pr-n">2</div>
+      <div><h4>Minh bạch và có sự đồng ý</h4><p>Người chơi được thông báo rõ launcher kiểm tra những gì trước khi quét. Phiên bản thông báo mà họ đã đồng ý được ghi lại.</p></div>
+    </div>
+    <div class="card pr">
+      <div class="pr-n">3</div>
+      <div><h4>Tối thiểu hoá dữ liệu</h4><p>Chỉ thu tín hiệu cần để quyết định cho vào hay không (tiến trình khớp danh sách cấm, hash file game), không thu dữ liệu riêng tư.</p></div>
+    </div>
+    <div class="card pr">
+      <div class="pr-n">4</div>
+      <div><h4>Không can thiệp máy người chơi</h4><p>Mặc định chỉ ghi nhận. “Chặn” chỉ là không cấp quyền vào server, không xoá, sửa hay tắt bất cứ thứ gì trên máy người chơi.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ 5. CÁCH HOẠT ĐỘNG ============================ -->
+<section class="pb">
+  <h1 id="s5"><span class="num">05</span>Cách hệ thống hoạt động</h1>
+
+  <h2>5.1 Hành trình của một người chơi</h2>
+  <p>Khi hoàn thiện, mỗi phiên chơi đi qua các bước trong Hình 2: quyền vào server gắn với kết quả kiểm tra và được xác nhận lại liên tục trong suốt phiên chơi.</p>
+
+  <figure>
+    <svg viewBox="0 0 680 422" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Vòng đời một phiên chơi">
+      <defs>
+        <marker id="f2-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0F5B6B"/></marker>
+        <marker id="f2-r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#B83A2E"/></marker>
+      </defs>
+
+      <!-- Frames (drawn first) -->
+      <rect x="22" y="284" width="640" height="58" rx="6" fill="#F3F8F9" stroke="#0F5B6B" stroke-width="1.2"/>
+      <rect x="22" y="354" width="640" height="60" rx="6" fill="#FCF4F3" stroke="#B83A2E" stroke-width="1.2"/>
+
+      <!-- Lifelines -->
+      <line x1="110" y1="44" x2="110" y2="414" stroke="#C3CDD7" stroke-width="1.2" stroke-dasharray="4 4"/>
+      <line x1="360" y1="44" x2="360" y2="414" stroke="#C3CDD7" stroke-width="1.2" stroke-dasharray="4 4"/>
+      <line x1="580" y1="44" x2="580" y2="414" stroke="#C3CDD7" stroke-width="1.2" stroke-dasharray="4 4"/>
+
+      <!-- Frame tabs (above lifelines) -->
+      <path d="M22 302 V290 a6 6 0 0 1 6 -6 H196 V296 l-8 6 Z" fill="#0F5B6B"/>
+      <text x="31" y="297" class="fr">LẶP LẠI TRONG LÚC CHƠI</text>
+      <path d="M22 372 V360 a6 6 0 0 1 6 -6 H236 V366 l-8 6 Z" fill="#B83A2E"/>
+      <text x="31" y="367" class="fr">NẾU VI PHẠM HOẶC MẤT HEARTBEAT</text>
+
+      <!-- Headers -->
+      <rect x="20" y="6" width="180" height="38" rx="8" fill="#0B2A3A"/>
+      <text x="110" y="30" class="hd">Người chơi · Launcher</text>
+      <rect x="270" y="6" width="180" height="38" rx="8" fill="#0F5B6B"/>
+      <text x="360" y="30" class="hd">Dịch vụ anti-cheat</text>
+      <rect x="500" y="6" width="160" height="38" rx="8" fill="#5E6E7D"/>
+      <text x="580" y="30" class="hd">Server game The Isle</text>
+
+      <!-- 1 -->
+      <line x1="112" y1="74" x2="356" y2="74" stroke="#0F5B6B" stroke-width="1.5" marker-end="url(#f2-a)"/>
+      <circle cx="127" cy="63" r="8" fill="#0F5B6B"/><text x="127" y="66.2" class="bt">1</text>
+      <text x="140" y="67" class="lbl">Đăng nhập Steam + đồng ý thông báo</text>
+
+      <!-- 2 (self) -->
+      <rect x="36" y="88" width="148" height="26" rx="6" fill="#E6F2F4" stroke="#0F5B6B" stroke-width="1"/>
+      <circle cx="51" cy="101" r="8" fill="#0F5B6B"/><text x="51" y="104.2" class="bt">2</text>
+      <text x="64" y="105" class="lbl">Quét máy lần đầu</text>
+
+      <!-- 3 -->
+      <line x1="112" y1="142" x2="356" y2="142" stroke="#0F5B6B" stroke-width="1.5" marker-end="url(#f2-a)"/>
+      <circle cx="127" cy="131" r="8" fill="#0F5B6B"/><text x="127" y="134.2" class="bt">3</text>
+      <text x="140" y="135" class="lbl">Gửi báo cáo quét</text>
+
+      <!-- 4 (self) -->
+      <rect x="284" y="156" width="152" height="26" rx="6" fill="#E6F2F4" stroke="#0F5B6B" stroke-width="1"/>
+      <circle cx="299" cy="169" r="8" fill="#0F5B6B"/><text x="299" y="172.2" class="bt">4</text>
+      <text x="312" y="173" class="lbl">Sạch → cấp token</text>
+
+      <!-- 5 -->
+      <line x1="362" y1="210" x2="576" y2="210" stroke="#0F5B6B" stroke-width="1.5" marker-end="url(#f2-a)"/>
+      <circle cx="377" cy="199" r="8" fill="#0F5B6B"/><text x="377" y="202.2" class="bt">5</text>
+      <text x="390" y="203" class="lbl">Thêm Steam ID vào whitelist</text>
+
+      <!-- 6 -->
+      <line x1="114" y1="240" x2="358" y2="240" stroke="#0F5B6B" stroke-width="1.5" marker-start="url(#f2-a)"/>
+      <circle cx="127" cy="229" r="8" fill="#0F5B6B"/><text x="127" y="232.2" class="bt">6</text>
+      <text x="140" y="233" class="lbl">Trả token cho launcher</text>
+
+      <!-- 7 -->
+      <line x1="112" y1="270" x2="576" y2="270" stroke="#0F5B6B" stroke-width="1.5" marker-end="url(#f2-a)"/>
+      <circle cx="127" cy="259" r="8" fill="#0F5B6B"/><text x="127" y="262.2" class="bt">7</text>
+      <text x="140" y="263" class="lbl">Mở game và vào server</text>
+
+      <!-- 8 -->
+      <line x1="112" y1="326" x2="356" y2="326" stroke="#0F5B6B" stroke-width="1.5" marker-end="url(#f2-a)"/>
+      <circle cx="127" cy="315" r="8" fill="#0F5B6B"/><text x="127" y="318.2" class="bt">8</text>
+      <text x="140" y="319" class="lbl">Heartbeat + báo cáo quét định kỳ</text>
+
+      <!-- 9 -->
+      <line x1="362" y1="398" x2="576" y2="398" stroke="#B83A2E" stroke-width="1.5" marker-end="url(#f2-r)"/>
+      <circle cx="377" cy="387" r="8" fill="#B83A2E"/><text x="377" y="390.2" class="bt">9</text>
+      <text x="390" y="391" class="lbl">Gỡ Steam ID khỏi whitelist</text>
+      <rect x="32" y="386" width="196" height="20" rx="4" fill="#FCF4F3"/>
+      <text x="38" y="400" class="t3i">Không tác động vào máy người chơi</text>
+    </svg>
+    <figcaption><b>Hình 2.</b> Vòng đời một phiên chơi. Mọi biện pháp xử lý đều diễn ra ở phía server, không tác động vào máy người chơi.</figcaption>
+  </figure>
+
+  <h2>5.2 Bên trong một lần quét</h2>
+  <p>Agent nạp chính sách từ <code>policy.json</code>, chạy lần lượt các module phát hiện rồi gộp các dấu hiệu tìm được (<i>finding</i>) thành báo cáo <code>ScanReport</code> dạng JSON; báo cáo “sạch” khi không có dấu hiệu nào.</p>
+
+  <figure>
+    <svg viewBox="0 0 680 226" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Luồng xử lý một lần quét">
+      <defs>
+        <marker id="f3-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0F5B6B"/></marker>
+        <marker id="f3-g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#8A98A6"/></marker>
+      </defs>
+
+      <!-- policy.json -->
+      <path d="M6 50 H88 L106 68 V150 H6 Z" fill="#fff" stroke="#AEBBC7" stroke-width="1.2"/>
+      <path d="M88 50 V68 H106" fill="#E9EEF3" stroke="#AEBBC7" stroke-width="1.2"/>
+      <text x="15" y="86" class="tmb">policy.json</text>
+      <text x="15" y="106" class="t3">Danh sách cấm</text>
+      <text x="15" y="122" class="t3">File cần bảo vệ</text>
+      <text x="15" y="138" class="t3">Chế độ · chu kỳ</text>
+      <line x1="108" y1="100" x2="124" y2="100" stroke="#0F5B6B" stroke-width="1.5" marker-end="url(#f3-a)"/>
+
+      <!-- Scanner -->
+      <rect x="128" y="26" width="172" height="148" rx="10" fill="#fff" stroke="#2F8F5B" stroke-width="1.6"/>
+      <text x="142" y="48" class="t1s">Scanner</text>
+      <rect x="140" y="58" width="148" height="34" rx="7" fill="#E6F2F4"/>
+      <circle cx="155" cy="70" r="7" fill="#0F5B6B"/><text x="155" y="73.2" class="bt">1</text>
+      <text x="168" y="74" class="t2b">Quét tiến trình</text>
+      <text x="152" y="87" class="tm">ProcessScanner</text>
+      <rect x="140" y="96" width="148" height="34" rx="7" fill="#E6F2F4"/>
+      <circle cx="155" cy="108" r="7" fill="#0F5B6B"/><text x="155" y="111.2" class="bt">2</text>
+      <text x="168" y="112" class="t2b">Toàn vẹn file</text>
+      <text x="152" y="125" class="tm">FileIntegrityChecker</text>
+      <rect x="140" y="134" width="148" height="34" rx="7" fill="#E6F2F4"/>
+      <circle cx="155" cy="146" r="7" fill="#0F5B6B"/><text x="155" y="149.2" class="bt">3</text>
+      <text x="168" y="150" class="t2b">Nhật ký thực thi</text>
+      <text x="152" y="163" class="tm">ExecutionHistoryScanner</text>
+      <line x1="302" y1="100" x2="318" y2="100" stroke="#0F5B6B" stroke-width="1.5" marker-end="url(#f3-a)"/>
+
+      <!-- Findings -->
+      <rect x="322" y="26" width="120" height="148" rx="10" fill="#fff" stroke="#AEBBC7" stroke-width="1.2"/>
+      <text x="334" y="48" class="t1s">Findings</text>
+      <text x="334" y="63" class="t3" style="font-size: 9.5px;">dấu hiệu phát hiện</text>
+      <rect x="334" y="72" width="96" height="16" rx="4" fill="#F9E9E7"/><text x="340" y="84" class="cp" fill="#B83A2E">blocked-process</text>
+      <rect x="334" y="92" width="96" height="16" rx="4" fill="#F9E9E7"/><text x="340" y="104" class="cp" fill="#B83A2E">file-tampered</text>
+      <rect x="334" y="112" width="96" height="16" rx="4" fill="#F9E9E7"/><text x="340" y="124" class="cp" fill="#B83A2E">unsigned-file</text>
+      <rect x="334" y="132" width="96" height="16" rx="4" fill="#FBF3E2"/><text x="340" y="144" class="cp" fill="#8F6300">file-missing</text>
+      <text x="334" y="164" class="t3" style="font-size: 9.5px;">+ 8 mã khác</text>
+      <line x1="444" y1="100" x2="460" y2="100" stroke="#0F5B6B" stroke-width="1.5" marker-end="url(#f3-a)"/>
+
+      <!-- ScanReport -->
+      <rect x="464" y="26" width="104" height="148" rx="10" fill="#fff" stroke="#AEBBC7" stroke-width="1.2"/>
+      <text x="476" y="48" class="t1s">ScanReport</text>
+      <text x="476" y="63" class="t3" style="font-size: 9.5px;">báo cáo JSON</text>
+      <text x="476" y="88" class="tm">TimestampUtc</text>
+      <text x="476" y="106" class="tm">Machine</text>
+      <text x="476" y="124" class="tm">Clean</text>
+      <text x="476" y="142" class="tm">Findings[]</text>
+
+      <!-- Branch -->
+      <path d="M570 100 H578 V65 H585" fill="none" stroke="#0F5B6B" stroke-width="1.5" marker-end="url(#f3-a)"/>
+      <path d="M578 100 V143 H585" fill="none" stroke="#0F5B6B" stroke-width="1.5" marker-end="url(#f3-a)"/>
+
+      <!-- Observe / Enforce -->
+      <rect x="589" y="40" width="87" height="50" rx="8" fill="#E7F4EC" stroke="#2F8F5B" stroke-width="1.2"/>
+      <text x="599" y="61" class="t2b" style="fill: #2F8F5B;">Observe</text>
+      <text x="599" y="78" class="t3" style="fill: #34424F;">ghi log</text>
+      <rect x="589" y="112" width="87" height="62" rx="8" fill="#F9E9E7" stroke="#B83A2E" stroke-width="1.2"/>
+      <text x="599" y="133" class="t2b" style="fill: #B83A2E;">Enforce</text>
+      <text x="599" y="150" class="t3" style="fill: #34424F; font-size: 9.5px;">không cấp /</text>
+      <text x="599" y="164" class="t3" style="fill: #34424F; font-size: 9.5px;">thu hồi token</text>
+
+      <!-- Loop -->
+      <path d="M632 176 V196 H214 V180" fill="none" stroke="#8A98A6" stroke-width="1.4" marker-end="url(#f3-g)"/>
+      <text x="423" y="216" class="t3" text-anchor="middle">Lặp lại mỗi 30 giây (intervalSeconds, tối thiểu 5 giây), hoặc chạy 1 lần với --once</text>
+    </svg>
+    <figcaption><b>Hình 3.</b> Luồng xử lý một lần quét: nạp policy, chạy các module phát hiện, gộp thành báo cáo, rồi ghi log hoặc chặn tuỳ chế độ.</figcaption>
+  </figure>
+
+  <p>Khi chạy một lần (<code>--once</code>), mã thoát của chương trình cho biết kết quả: <b>0</b> = sạch, <b>1</b> = có phát hiện, <b>2</b> = lỗi đọc policy. Thuận tiện để launcher hoặc script khác tích hợp.</p>
+
+  <h2>5.3 Module 1: Quét tiến trình cấm</h2>
+  <div class="steps">
+    <div class="step">
+      <div class="step-n">1</div>
+      <div><h4>Nạp danh sách cấm</h4><p>Tên tiến trình trong policy được chuẩn hoá (bỏ khoảng trắng, chuyển chữ thường) để so khớp không phân biệt hoa/thường.</p></div>
+      <div class="step-out"><span class="out-note">(không sinh cảnh báo)</span></div>
+    </div>
+    <div class="step">
+      <div class="step-n">2</div>
+      <div><h4>Đối chiếu tiến trình đang chạy</h4><p>Liệt kê mọi tiến trình trên máy và so tên với danh sách cấm. Tiến trình không khớp bị bỏ qua ngay và <b>không được ghi lại</b>.</p></div>
+      <div class="step-out"><span class="out-note">Không khớp → bỏ qua</span></div>
+    </div>
+    <div class="step">
+      <div class="step-n">3</div>
+      <div><h4>Xác minh bằng hash (tuỳ chọn)</h4><p>Nếu luật có kèm SHA-256, module tính hash file thực thi của tiến trình và chỉ kết luận vi phạm khi khớp, tránh báo oan phần mềm hợp pháp trùng tên. Không đọc được file để xác minh thì không kết luận.</p></div>
+      <div class="step-out"><span class="out-note">Hash khác → bỏ qua</span></div>
+    </div>
+    <div class="step">
+      <div class="step-n">4</div>
+      <div><h4>Ghi nhận vi phạm</h4><p>Tạo một phát hiện gồm tên tiến trình, PID, lý do và đường dẫn file thực thi.</p></div>
+      <div class="step-out"><div class="out"><span class="chip high">blocked-process</span></div><span class="out-note">mức độ theo luật</span></div>
+    </div>
+  </div>
+
+  <h2>5.4 Module 2: Kiểm tra toàn vẹn file game</h2>
+  <div class="steps">
+    <div class="step">
+      <div class="step-n">1</div>
+      <div><h4>Kiểm tra tồn tại</h4><p>Với từng file trong danh sách bảo vệ, kiểm tra file có nằm đúng đường dẫn đã khai báo.</p></div>
+      <div class="step-out"><div class="out"><span class="chip medium">file-missing</span></div></div>
+    </div>
+    <div class="step">
+      <div class="step-n">2</div>
+      <div><h4>So khớp “dấu vân tay” SHA-256</h4><p>Nếu policy có hash chuẩn, tính SHA-256 của file và so với danh sách hash hợp lệ (cho phép khai báo nhiều phiên bản). Chỉ cần sửa một byte, hash sẽ khác hoàn toàn.</p></div>
+      <div class="step-out"><div class="out"><span class="chip high">file-tampered</span></div><div class="out"><span class="chip low">file-unreadable</span></div></div>
+    </div>
+    <div class="step">
+      <div class="step-n">3</div>
+      <div><h4>Kiểm tra chữ ký số</h4><p>Nếu bắt buộc có chữ ký, đọc chữ ký Authenticode của file và đối chiếu bên ký với giá trị mong đợi (ví dụ <i>EasyAntiCheat Oy</i>). Xác thực đầy đủ chuỗi chứng chỉ và dấu thời gian, nên file bị sửa sau khi ký sẽ lộ ra.</p></div>
+      <div class="step-out"><div class="out"><span class="chip high">unsigned-file</span></div><div class="out"><span class="chip high">wrong-signer</span></div></div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <div class="callout-t">Kiểm tra thực tế trên bản cài The Isle</div>
+    <ul style="margin-bottom: 0;">
+      <li><code>TheIsle.exe</code> (trình khởi chạy) có chữ ký Authenticode hợp lệ của <b>EasyAntiCheat Oy</b> → có thể bật kiểm tra chữ ký kèm bên ký mong đợi.</li>
+      <li><code>TheIsleClient-Win64-Shipping.exe</code> (file game chính, ~204 MB) <b>không có chữ ký số</b> → cần dùng hash SHA-256 chuẩn và cập nhật mỗi khi game cập nhật.</li>
+    </ul>
+  </div>
+
+  <h2>5.5 Module 3: Nhật ký thực thi (bắt công cụ đã tắt)</h2>
+  <p>Cách né đơn giản nhất với hai module trên là <b>tắt công cụ gian lận trước khi mở launcher</b>. Windows tự ghi lại mỗi chương trình từng chạy trên máy (thư mục <code>Prefetch</code>) để tăng tốc khởi động phần mềm; module này đọc đúng nhật ký đó nên vẫn thấy công cụ đã tắt.</p>
+  <div class="steps">
+    <div class="step">
+      <div class="step-n">1</div>
+      <div><h4>Đọc tên trong nhật ký</h4><p>Tên chương trình nằm ngay trong tên mục của nhật ký (dạng <code>TEN.EXE-&lt;mã&gt;</code>), nên bước này <b>không cần mở file nào</b>.</p></div>
+      <div class="step-out"><span class="out-note">(không sinh cảnh báo)</span></div>
+    </div>
+    <div class="step">
+      <div class="step-n">2</div>
+      <div><h4>Lọc theo danh sách công bố</h4><p>Chỉ giữ lại tên khớp danh sách công cụ gian lận trong policy. Mọi phần mềm khác bị bỏ ngay tại đây: <b>không mở, không ghi lại, không gửi đi</b>.</p></div>
+      <div class="step-out"><span class="out-note">Không khớp → bỏ qua</span></div>
+    </div>
+    <div class="step">
+      <div class="step-n">3</div>
+      <div><h4>Đọc chi tiết mục đã khớp</h4><p>Chỉ với những mục đã khớp, module mới mở ra lấy <b>lần chạy gần nhất</b> và <b>số lần đã chạy</b>. Giá trị vô lý (ví dụ do phiên bản Windows khác) bị bỏ chứ không đoán bừa.</p></div>
+      <div class="step-out"><span class="out-note">Chỉ mục đã khớp</span></div>
+    </div>
+    <div class="step">
+      <div class="step-n">4</div>
+      <div><h4>Giới hạn cửa sổ thời gian rồi ghi nhận</h4><p>Chỉ xét các lần chạy trong <b>7 ngày</b> gần nhất (cấu hình được). Phát hiện gồm tên công cụ, lần chạy gần nhất và số lần chạy.</p></div>
+      <div class="step-out"><div class="out"><span class="chip medium">executed-tool</span></div><div class="out"><span class="chip low" style="font-size: 7.2pt; white-space: normal;">suspicious-executed-name</span></div></div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <div class="callout-t">Hai điều kiện vận hành cần biết trước</div>
+    <ul style="margin-bottom: 0;">
+      <li>Nhật ký này chỉ tài khoản quản trị đọc được. Launcher chạy quyền thường thì module ghi <span class="chip">execution-history-unavailable</span> ở mức <i>info</i> và <b>không kết luận gì</b> — không có dữ liệu thì không suy đoán.</li>
+      <li>Người chơi có thể tắt nhật ký của Windows. Khi đó module ghi <span class="chip">execution-history-off</span> ở mức <i>info</i> để admin thấy bối cảnh, chứ bản thân việc tắt <b>không bị coi là gian lận</b> (có máy tắt sẵn vì lý do khác).</li>
+    </ul>
+  </div>
+
+  <div class="callout gray">
+    <p><b>Ranh giới quyền riêng tư của module này.</b> Nhật ký thực thi là lịch sử chạy của <i>mọi</i> phần mềm trên máy, nên module được thiết kế hẹp có chủ đích: lọc theo tên trước khi mở, chỉ nhìn 7 ngày gần nhất, và không bao giờ gửi về server tên phần mềm nằm ngoài danh sách đã công bố. Vì đây là tầng chạm quyền riêng tư nhiều nhất, bật nó lên <b>bắt buộc</b> phải cập nhật thông báo cho người chơi và tăng phiên bản thông báo để họ đồng ý lại (xem mục 8).</p>
+  </div>
+
+  <h2>5.6 Hai chế độ: Observe và Enforce</h2>
+  <div class="grid2">
+    <div class="card top-ok">
+      <div class="card-k" style="color: var(--ok);">Observe · mặc định</div>
+      <p>Chỉ ghi nhận và báo cáo, không ảnh hưởng người chơi. Dùng cho giai đoạn thử nghiệm: đo tỉ lệ báo nhầm, tinh chỉnh danh sách cấm.</p>
+    </div>
+    <div class="card top-danger">
+      <div class="card-k" style="color: var(--danger);">Enforce</div>
+      <p>Có vi phạm thì không cấp token, hoặc thu hồi token đang dùng, và người chơi bị gỡ khỏi whitelist nên không ở lại server được.</p>
+    </div>
+  </div>
+
+  <h2>5.7 Hiệu năng (đo thực tế)</h2>
+  <table class="keep">
+    <thead><tr><th>Phép đo trên máy thử nghiệm (272 tiến trình đang chạy)</th><th style="width: 22%;">Thời gian</th></tr></thead>
+    <tbody>
+      <tr><td>Một lần chạy quét với policy mẫu, tính cả thời gian khởi động chương trình</td><td><b>~0,12 giây</b></td></tr>
+      <tr><td>Băm SHA-256 file game chính <code>TheIsleClient-Win64-Shipping.exe</code> (~204 MB)</td><td><b>thêm ~0,2 giây</b></td></tr>
+    </tbody>
+  </table>
+  <p class="small muted">Với chu kỳ 30 giây, mức tiêu thụ này gần như không đáng kể (có thể tối ưu thêm bằng cách lưu đệm hash).</p>
+</section>
+
+<!-- ============================ 6. POLICY ============================ -->
+<section>
+  <h1 id="s6"><span class="num">06</span>Cấu hình bằng chính sách (policy.json)</h1>
+  <p>Toàn bộ luật phát hiện nằm trong một file JSON. Thay đổi luật không cần sửa code hay phát hành lại launcher; ở các bản sau, policy sẽ được tải từ server để điều chỉnh tập trung cho mọi người chơi.</p>
+
+  <table>
+    <thead><tr><th style="width: 27%;">Trường</th><th>Ý nghĩa</th><th style="width: 16%;">Giá trị mẫu</th></tr></thead>
+    <tbody>
+      <tr><td><code>mode</code></td><td><code>observe</code>: chỉ ghi nhận · <code>enforce</code>: thực thi chặn</td><td><code>observe</code></td></tr>
+      <tr><td><code>intervalSeconds</code></td><td>Chu kỳ quét, tính bằng giây (tối thiểu 5)</td><td><code>30</code></td></tr>
+      <tr><td><code>disclosure</code>, <code>disclosureVersion</code></td><td>Nội dung thông báo cho người chơi và phiên bản họ đã đồng ý</td><td><code>iw-v1</code></td></tr>
+      <tr><td><code>gameProcessName</code></td><td>Tên tiến trình game, dùng cho các kiểm tra mở rộng sau này</td><td><code>TheIsle</code></td></tr>
+      <tr><td><code>blockedProcesses[]</code></td><td>Tiến trình cấm: <code>name</code>, <code>reason</code>, <code>severity</code>, <code>sha256</code> (tuỳ chọn)</td><td>6 luật</td></tr>
+      <tr><td><code>protectedFiles[]</code></td><td>File cần bảo vệ: <code>path</code>, <code>sha256</code>, <code>requireSignature</code>, <code>expectedSigner</code></td><td>1 file</td></tr>
+      <tr><td><code>fileScan</code></td><td>Tìm file công cụ gian lận đã biết theo tên, trong một số thư mục được chỉ định</td><td>6 tên file</td></tr>
+      <tr><td><code>processInventory</code></td><td>Gửi tên phần mềm đang chạy + từ khoá cần gắn cờ, kèm danh sách bỏ qua</td><td>9 từ khoá</td></tr>
+      <tr><td><code>executionHistory</code></td><td>Nhật ký thực thi: <code>programs</code>, <code>keywords</code>, <code>lookbackDays</code>, <code>allow</code>. Mặc định <b>tắt</b></td><td>7 ngày</td></tr>
+    </tbody>
+  </table>
+
+  <h2>6.1 Danh sách cấm mẫu</h2>
+  <table>
+    <thead><tr><th style="width: 26%;">Tên tiến trình</th><th style="width: 24%;">Công cụ</th><th>Loại</th><th style="width: 13%;">Mức độ</th></tr></thead>
+    <tbody>
+      <tr><td><code>cheatengine-x86_64</code></td><td>Cheat Engine (64-bit)</td><td>Trình sửa bộ nhớ</td><td><span class="sev high">high</span></td></tr>
+      <tr><td><code>cheatengine-i386</code></td><td>Cheat Engine (32-bit)</td><td>Trình sửa bộ nhớ</td><td><span class="sev high">high</span></td></tr>
+      <tr><td><code>artmoney</code></td><td>ArtMoney</td><td>Trình sửa bộ nhớ</td><td><span class="sev high">high</span></td></tr>
+      <tr><td><code>xenos64</code></td><td>Xenos</td><td>Công cụ tiêm DLL</td><td><span class="sev high">high</span></td></tr>
+      <tr><td><code>extremeinjector</code></td><td>Extreme Injector</td><td>Công cụ tiêm DLL</td><td><span class="sev high">high</span></td></tr>
+      <tr><td><code>x64dbg</code></td><td>x64dbg</td><td>Debugger dùng chung, cần xem xét</td><td><span class="sev medium">medium</span></td></tr>
+    </tbody>
+  </table>
+
+  <div class="code-label">Trích <code>config/policy.example.json</code> (rút gọn)</div>
+<pre class="code">{
+  <span class="jk">"mode"</span>: <span class="js">"observe"</span>,
+  <span class="jk">"intervalSeconds"</span>: <span class="jn">30</span>,
+  <span class="jk">"disclosureVersion"</span>: <span class="js">"iw-v1"</span>,
+  <span class="jk">"disclosure"</span>: <span class="js">"…"</span>,
+  <span class="jk">"gameProcessName"</span>: <span class="js">"TheIsle"</span>,
+  <span class="jk">"blockedProcesses"</span>: [
+    { <span class="jk">"name"</span>: <span class="js">"cheatengine-x86_64"</span>, <span class="jk">"reason"</span>: <span class="js">"Cheat Engine"</span>, <span class="jk">"severity"</span>: <span class="js">"high"</span> },
+    <span class="jc">… 4 luật khác …</span>
+    { <span class="jk">"name"</span>: <span class="js">"x64dbg"</span>, <span class="jk">"reason"</span>: <span class="js">"Debugger (dung chung, xem xet)"</span>, <span class="jk">"severity"</span>: <span class="js">"medium"</span> }
+  ],
+  <span class="jk">"protectedFiles"</span>: [
+    { <span class="jk">"path"</span>: <span class="js">"C:\\Program Files (x86)\\Steam\\steamapps\\common\\The Isle\\TheIsle.exe"</span>,
+      <span class="jk">"requireSignature"</span>: <span class="jn">false</span> }
+  ]
+}</pre>
+
+  <h2>6.2 Gợi ý cấu hình cho bản triển khai thật</h2>
+  <p>Dựa trên kiểm tra thực tế ở mục 5.4: chữ ký số cho trình khởi chạy, hash chuẩn cho file game chính.</p>
+<pre class="code"><span class="jk">"gameProcessName"</span>: <span class="js">"TheIsleClient-Win64-Shipping"</span>,
+<span class="jk">"protectedFiles"</span>: [
+  { <span class="jk">"path"</span>: <span class="js">"…\\The Isle\\TheIsle.exe"</span>,
+    <span class="jk">"requireSignature"</span>: <span class="jn">true</span>, <span class="jk">"expectedSigner"</span>: <span class="js">"EasyAntiCheat Oy"</span> },
+  { <span class="jk">"path"</span>: <span class="js">"…\\The Isle\\TheIsle\\Binaries\\Win64\\TheIsleClient-Win64-Shipping.exe"</span>,
+    <span class="jk">"sha256"</span>: [ <span class="js">"&lt;hash chuẩn của phiên bản game hiện hành&gt;"</span> ] }
+]</pre>
+
+  <div class="code-label">Nhật ký thực thi — bật sau khi đã cập nhật thông báo cho người chơi (mục 5.5 và 8)</div>
+<pre class="code"><span class="jk">"executionHistory"</span>: {
+  <span class="jk">"enabled"</span>: <span class="jn">true</span>,
+  <span class="jk">"lookbackDays"</span>: <span class="jn">7</span>,                 <span class="jc">// chỉ xét 7 ngày gần nhất</span>
+  <span class="jk">"programs"</span>: [
+    { <span class="jk">"name"</span>: <span class="js">"IsleUnlocker.exe"</span>, <span class="jk">"reason"</span>: <span class="js">"Isle Unlocker"</span>, <span class="jk">"severity"</span>: <span class="js">"medium"</span> },
+    <span class="jc">… các công cụ khác trong danh sách đã công bố …</span>
+  ],
+  <span class="jk">"allow"</span>: [ <span class="js">"TrainerRoad.exe"</span> ]    <span class="jc">// chặn trước các trường hợp báo nhầm đã biết</span>
+}</pre>
+</section>
+
+<!-- ============================ 7. BÁO CÁO ============================ -->
+<section>
+  <h1 id="s7"><span class="num">07</span>Báo cáo quét và mã phát hiện</h1>
+  <p>Mỗi lần quét tạo một <code>ScanReport</code> gồm thời điểm quét (UTC), tên máy, trạng thái <code>Clean</code> và danh sách <code>Findings</code>. Mỗi finding có mã ổn định (<code>Code</code>), mức độ (<code>Severity</code>), thông điệp (<code>Message</code>) và chi tiết kỹ thuật (<code>Detail</code>).</p>
+
+  <div class="code-label"><span class="pill ok">Sạch</span> Kết quả chạy thực tế với policy mẫu (tên máy đã được ẩn)</div>
+<pre class="code">{ <span class="jk">"TimestampUtc"</span>: <span class="js">"2026-09-25T10:04:43.8127765+00:00"</span>, <span class="jk">"Machine"</span>: <span class="js">"PLAYER-PC"</span>,
+  <span class="jk">"Clean"</span>: <span class="jn">true</span>, <span class="jk">"Findings"</span>: [] }</pre>
+
+  <div class="code-label"><span class="pill key">Vi phạm</span> Ví dụ minh hoạ khi có vi phạm (cùng định dạng báo cáo)</div>
+<pre class="code">{
+  <span class="jk">"TimestampUtc"</span>: <span class="js">"2026-09-25T10:05:37.5381795+00:00"</span>,
+  <span class="jk">"Machine"</span>: <span class="js">"PLAYER-PC"</span>,
+  <span class="jk">"Clean"</span>: <span class="jn">false</span>,
+  <span class="jk">"Findings"</span>: [
+    { <span class="jk">"Code"</span>: <span class="js">"blocked-process"</span>, <span class="jk">"Severity"</span>: <span class="js">"high"</span>,
+      <span class="jk">"Message"</span>: <span class="js">"Phát hiện tiến trình bị cấm: cheatengine-x86_64 (PID 7624)"</span>,
+      <span class="jk">"Detail"</span>: <span class="js">"Cheat Engine: C:\\Program Files\\Cheat Engine\\cheatengine-x86_64.exe"</span> },
+    { <span class="jk">"Code"</span>: <span class="js">"file-tampered"</span>, <span class="jk">"Severity"</span>: <span class="js">"high"</span>,
+      <span class="jk">"Message"</span>: <span class="js">"File bị thay đổi (hash không khớp): …\\Win64\\TheIsleClient-Win64-Shipping.exe"</span>,
+      <span class="jk">"Detail"</span>: <span class="js">"sha256=3B7E0C91…"</span> }
+  ]
+}</pre>
+
+  <h2>7.1 Bảng mã phát hiện</h2>
+  <table>
+    <thead><tr><th style="width: 20%;">Mã</th><th style="width: 12%;">Mức độ</th><th style="width: 33%;">Ý nghĩa</th><th>Gợi ý xử lý</th></tr></thead>
+    <tbody>
+      <tr><td><span class="chip">blocked-process</span></td><td><span class="sev rule">theo luật</span></td><td>Đang chạy phần mềm nằm trong danh sách cấm</td><td>Không cấp hoặc thu hồi quyền vào; với mức <i>medium</i>, admin xem xét trước khi xử lý</td></tr>
+      <tr><td><span class="chip">suspicious-process-name</span></td><td><span class="sev low">low</span></td><td>Tên phần mềm đang chạy chứa từ khoá hay gặp ở công cụ gian lận</td><td>Chỉ là suy đoán, admin xem xét. Không đủ mức để tự động chặn</td></tr>
+      <tr><td><span class="chip">blocked-file</span></td><td><span class="sev medium">medium</span></td><td>Tìm thấy file công cụ gian lận đã biết trên máy, kể cả khi chưa chạy</td><td>Admin xem xét; có file không đồng nghĩa đã dùng</td></tr>
+      <tr><td><span class="chip">executed-tool</span></td><td><span class="sev rule">theo luật</span></td><td>Nhật ký thực thi cho thấy công cụ trong danh sách đã <b>từng chạy</b> trên máy, kèm lần chạy gần nhất và số lần chạy</td><td>Bằng chứng mạnh hơn <i>blocked-file</i> (đã chạy, không chỉ có sẵn) nhưng không chứng minh chạy cùng lúc với game — đối chiếu thời điểm với phiên chơi</td></tr>
+      <tr><td><span class="chip">suspicious-executed-name</span></td><td><span class="sev low">low</span></td><td>Tên chương trình từng chạy chứa từ khoá hay gặp ở công cụ gian lận</td><td>Chỉ là suy đoán, admin xem xét. Không đủ mức để tự động chặn</td></tr>
+      <tr><td><span class="chip">execution-history-unavailable</span></td><td><span class="sev rule">info</span></td><td>Không đọc được nhật ký thực thi (thường vì launcher không chạy bằng quyền quản trị)</td><td>Không phải vi phạm. Hướng dẫn người chơi mở launcher bằng quyền quản trị nếu muốn dùng tầng này</td></tr>
+      <tr><td><span class="chip">execution-history-off</span></td><td><span class="sev rule">info</span></td><td>Nhật ký thực thi của Windows đang bị tắt trên máy</td><td>Ghi nhận bối cảnh. Có máy tắt sẵn vì lý do khác, chỉ đáng chú ý khi đi kèm dấu hiệu khác</td></tr>
+      <tr><td><span class="chip">file-tampered</span></td><td><span class="sev high">high</span></td><td>Hash file game khác bản chuẩn, file đã bị sửa</td><td>Yêu cầu người chơi dùng chức năng “Verify integrity of game files” của Steam</td></tr>
+      <tr><td><span class="chip">unsigned-file</span></td><td><span class="sev high">high</span></td><td>File bắt buộc có chữ ký nhưng không có chữ ký hợp lệ</td><td>Như trên</td></tr>
+      <tr><td><span class="chip">wrong-signer</span></td><td><span class="sev high">high</span></td><td>File được ký bởi bên không mong đợi</td><td>Như trên; admin xem xét</td></tr>
+      <tr><td><span class="chip">file-missing</span></td><td><span class="sev medium">medium</span></td><td>Không tìm thấy file cần bảo vệ</td><td>Kiểm tra đường dẫn cài đặt game</td></tr>
+      <tr><td><span class="chip">file-unreadable</span></td><td><span class="sev low">low</span></td><td>Không đọc được file để tính hash</td><td>Ghi log; thường do quyền truy cập hoặc file đang bị khoá</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============================ 8. MINH BẠCH ============================ -->
+<section>
+  <h1 id="s8"><span class="num">08</span>Minh bạch và quyền riêng tư</h1>
+  <p>Người chơi chỉ tin một launcher khi biết rõ nó làm gì. Hệ thống được thiết kế theo hướng tối thiểu hoá dữ liệu:</p>
+
+  <div class="grid2" style="margin-bottom: 10pt;">
+    <div class="card top-ok">
+      <div class="card-k" style="color: var(--ok);">Hệ thống thu thập (chỉ phần cần thiết)</div>
+      <ul class="ilist">
+        <li><svg class="ic ok" viewBox="0 0 16 16"><circle cx="8" cy="8" r="8"/><path d="M4.6 8.3l2.3 2.3 4.6-4.8" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Tên, PID và đường dẫn của tiến trình <b>khớp danh sách cấm</b>.</span></li>
+        <li><svg class="ic ok" viewBox="0 0 16 16"><circle cx="8" cy="8" r="8"/><path d="M4.6 8.3l2.3 2.3 4.6-4.8" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Hash SHA-256 và thông tin chữ ký của các <b>file game được chỉ định</b> trong policy.</span></li>
+        <li><svg class="ic ok" viewBox="0 0 16 16"><circle cx="8" cy="8" r="8"/><path d="M4.6 8.3l2.3 2.3 4.6-4.8" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b>Tên</b> các phần mềm đang chạy trên máy, để admin đối chiếu với các công cụ gian lận đã biết.</span></li>
+        <li><svg class="ic ok" viewBox="0 0 16 16"><circle cx="8" cy="8" r="8"/><path d="M4.6 8.3l2.3 2.3 4.6-4.8" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span><i>Nếu admin bật nhật ký thực thi:</i> các công cụ <b>trong danh sách đã công bố</b> từng chạy trong 7 ngày gần nhất, kèm thời điểm và số lần chạy.</span></li>
+        <li><svg class="ic ok" viewBox="0 0 16 16"><circle cx="8" cy="8" r="8"/><path d="M4.6 8.3l2.3 2.3 4.6-4.8" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Tên máy và thời điểm quét (UTC).</span></li>
+        <li><svg class="ic ok" viewBox="0 0 16 16"><circle cx="8" cy="8" r="8"/><path d="M4.6 8.3l2.3 2.3 4.6-4.8" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Khi có phần server: Steam ID (để cấp/thu hồi whitelist) và phiên bản thông báo người chơi đã đồng ý.</span></li>
+      </ul>
+    </div>
+    <div class="card top-danger">
+      <div class="card-k" style="color: var(--danger);">Hệ thống không làm</div>
+      <ul class="ilist">
+        <li><svg class="ic no" viewBox="0 0 16 16"><circle cx="8" cy="8" r="8"/><path d="M5.4 5.4l5.2 5.2M10.6 5.4l-5.2 5.2" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg><span>Không mở hay đọc <b>nội dung</b> tài liệu, hình ảnh, file cá nhân. Khi tìm công cụ gian lận chỉ so tên file với danh sách cố định.</span></li>
+        <li><svg class="ic no" viewBox="0 0 16 16"><circle cx="8" cy="8" r="8"/><path d="M5.4 5.4l5.2 5.2M10.6 5.4l-5.2 5.2" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg><span>Không chụp màn hình, không ghi lại thao tác bàn phím, không đọc lịch sử duyệt web.</span></li>
+        <li><svg class="ic no" viewBox="0 0 16 16"><circle cx="8" cy="8" r="8"/><path d="M5.4 5.4l5.2 5.2M10.6 5.4l-5.2 5.2" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg><span>Không gửi đường dẫn, tham số dòng lệnh hay tiêu đề cửa sổ của phần mềm đang chạy, chỉ gửi tên.</span></li>
+        <li><svg class="ic no" viewBox="0 0 16 16"><circle cx="8" cy="8" r="8"/><path d="M5.4 5.4l5.2 5.2M10.6 5.4l-5.2 5.2" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg><span>Không gửi đi lịch sử chạy của các phần mềm khác trong nhật ký thực thi — chỉ tra đúng danh sách công cụ đã công bố, phần còn lại không đọc tới.</span></li>
+        <li><svg class="ic no" viewBox="0 0 16 16"><circle cx="8" cy="8" r="8"/><path d="M5.4 5.4l5.2 5.2M10.6 5.4l-5.2 5.2" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg><span>Không xoá, sửa, tắt hay chặn bất cứ thứ gì trên máy người chơi.</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout gray">
+    <p>Ngoài các mục trên, <b>không có dữ liệu nào khác của người chơi được gửi về server.</b> Khi nội dung thông báo thay đổi, phiên bản thông báo (<code>disclosureVersion</code>) được tăng lên và người chơi phải đồng ý lại trước khi vào server.</p>
+  </div>
+
+  <h2>8.1 Quy trình minh bạch</h2>
+  <ol>
+    <li>Hiển thị thông báo (disclosure) <b>trước khi quét</b>; lưu lại việc đồng ý kèm phiên bản thông báo (<code>disclosureVersion</code>).</li>
+    <li>Công bố rõ trong nội quy server và kênh Discord của cộng đồng.</li>
+    <li>Nêu thời gian lưu trữ dữ liệu; chỉ lưu những gì cần thiết, phù hợp quy định về bảo vệ dữ liệu cá nhân hiện hành.</li>
+    <li>Có kênh khiếu nại (ticket) cho người chơi cho rằng mình bị chặn nhầm.</li>
+  </ol>
+</section>
+
+<!-- ============================ 9. GIỚI HẠN ============================ -->
+<section class="pb">
+  <h1 id="s9"><span class="num">09</span>Giới hạn và quản trị rủi ro</h1>
+  <div class="callout warn">
+    <div class="callout-t">Nói thẳng về giới hạn</div>
+    <p>Đây là anti-cheat <b>user-mode</b> (chạy như một ứng dụng thông thường). Giá trị chính là <b>răn đe và bắt các công cụ phổ biến</b>, không phải lá chắn tuyệt đối. Hệ thống được thiết kế để chạy song song với EasyAntiCheat của game, như một lớp bổ sung ở tầng quản trị server.</p>
+  </div>
+
+  <table>
+    <thead><tr><th style="width: 27%;">Giới hạn / rủi ro</th><th style="width: 22%;">Ảnh hưởng</th><th>Hướng xử lý</th></tr></thead>
+    <tbody>
+      <tr><td>Cheat chạy ở kernel-mode, hoặc cheat tự viết chưa có trong danh sách cấm</td><td>Không phát hiện được bằng quét tiến trình</td><td>Chạy song song EAC; bổ sung soi module/DLL nạp vào game; phân tích log ở tầng phía server</td></tr>
+      <tr><td>Đổi tên file cheat để né so khớp theo tên</td><td>Lọt module quét tiến trình</td><td>Soi module/DLL nạp vào game; bổ sung nhận diện theo hash, không phụ thuộc tên file</td></tr>
+      <tr><td>Launcher bị sửa hoặc giả lập để luôn báo “sạch”</td><td>Qua mặt kiểm tra phía người chơi</td><td>Token ngắn hạn + heartbeat; ký số bản phát hành launcher; kết hợp tầng phía server</td></tr>
+      <tr><td>Báo nhầm, ví dụ lập trình viên dùng x64dbg hợp pháp</td><td>Chặn oan người chơi</td><td>Chạy Observe trước; mức <i>medium</i> cho công cụ dùng chung; luật kèm SHA-256; kênh khiếu nại</td></tr>
+      <tr><td>Game cập nhật làm thay đổi hash file</td><td>Báo <span class="chip">file-tampered</span> hàng loạt</td><td>Tự sinh và cập nhật hash chuẩn mỗi khi game cập nhật</td></tr>
+      <tr><td>Thư mục cài game khác nhau giữa các máy</td><td>Báo <span class="chip">file-missing</span> sai</td><td>Đề xuất bổ sung: tự dò thư mục cài đặt Steam trên từng máy</td></tr>
+      <tr><td>Kiểm tra chữ ký hiện ở mức cơ bản (đọc tên bên ký)</td><td>Có thể bị làm giả thông tin chữ ký</td><td>Xác thực đầy đủ chuỗi chứng chỉ và dấu thời gian bằng WinVerifyTrust</td></tr>
+      <tr><td>Nhật ký thực thi cần quyền quản trị mới đọc được</td><td>Người chơi mở launcher bằng quyền thường thì tầng này không có dữ liệu</td><td>Ghi <span class="chip">execution-history-unavailable</span> ở mức <i>info</i> và không suy đoán; hướng dẫn người chơi mở bằng quyền quản trị nếu server yêu cầu tầng này</td></tr>
+      <tr><td>Người chơi tắt hoặc xoá nhật ký thực thi của Windows để xoá dấu vết</td><td>Công cụ đã chạy không còn để lại dấu</td><td>Ghi nhận việc tắt ở mức <i>info</i>; về sau bổ sung nguồn ghi nhận thứ hai của Windows để không phụ thuộc một nguồn duy nhất</td></tr>
+    </tbody>
+  </table>
+</section>
+
+</body>
+</html>

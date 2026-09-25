@@ -1,0 +1,33 @@
+[project]
+name = "islewarden-server"
+version = "0.5.0"
+description = "IsleWarden server: access control and anti-cheat reports for community-run The Isle: EVRIMA servers"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi~=0.141.1",
+    "uvicorn~=0.54.0",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest~=9.1",
+    "httpx2~=2.13",
+]
+
+[project.scripts]
+islewarden-server = "islewarden_server.__main__:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["islewarden_server*"]
+
+[tool.setuptools.package-data]
+islewarden_server = ["static/*", "static/**/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = [".", "tests"]

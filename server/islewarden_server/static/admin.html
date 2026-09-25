@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Bảng điều khiển chống gian lận</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg:#0f1720; --card:#18232f; --card-2:#1d2a38; --ink:#e7eef5; --muted:#9fb0c0;
+    --brand:#39b3c6; --line:#294050; --ok:#3fb27f; --warn:#d8a13a; --danger:#e0645a; --plan:#6f9fd8;
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family:"Segoe UI", system-ui, sans-serif; background:var(--bg); color:var(--ink); font-size:14px; line-height:1.5; }
+  button, input, select, textarea { font:inherit; color:inherit; }
+  a { color:var(--brand); }
+
+  /* Header and nav stick together so admins can switch tabs without scrolling back up a long report list. */
+  .topbar { position:sticky; top:0; z-index:10; }
+  header { display:flex; align-items:center; gap:14px; padding:12px 20px; background:var(--card); border-bottom:1px solid var(--line); flex-wrap:wrap; }
+  header h1 { font-size:16px; margin:0; display:flex; align-items:center; gap:9px; }
+  header svg { width:22px; height:22px; }
+  .spacer { flex:1; }
+  nav { display:flex; gap:4px; padding:0 20px; background:var(--card); border-bottom:1px solid var(--line); overflow-x:auto; }
+  nav button { background:none; border:none; border-bottom:2px solid transparent; padding:10px 14px; cursor:pointer; color:var(--muted); white-space:nowrap; }
+  nav button:hover { color:var(--ink); }
+  nav button.on { color:var(--brand); border-bottom-color:var(--brand); }
+  main { padding:20px; max-width:1500px; margin:0 auto; }
+
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px; margin-bottom:16px; }
+  .card h2 { font-size:14px; margin:0 0 12px; color:var(--brand); letter-spacing:.3px; text-transform:uppercase; }
+  .card h3 { font-size:13px; margin:18px 0 8px; color:var(--muted); text-transform:uppercase; letter-spacing:.3px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(170px, 1fr)); gap:12px; }
+  .stat { background:var(--card-2); border:1px solid var(--line); border-radius:9px; padding:13px 15px; }
+  .stat .v { font-size:24px; font-weight:700; }
+  .stat .l { color:var(--muted); font-size:12px; margin-top:2px; }
+  .stat.alert .v { color:var(--danger); }
+
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th { text-align:left; color:var(--muted); font-weight:600; font-size:11.5px; text-transform:uppercase; letter-spacing:.4px; padding:7px 9px; border-bottom:1px solid var(--line); white-space:nowrap; }
+  td { padding:8px 9px; border-bottom:1px solid #1f2d3b; vertical-align:top; }
+  tr.click { cursor:pointer; }
+  tr.click:hover td { background:var(--card-2); }
+  .mono { font-family:"Cascadia Mono", Consolas, monospace; font-size:12px; }
+  .muted { color:var(--muted); }
+  .nowrap { white-space:nowrap; }
+  .right { text-align:right; }
+
+  .chip { display:inline-block; font-family:"Cascadia Mono", Consolas, monospace; font-size:11px; padding:1px 6px; border-radius:4px; background:#22303f; border:1px solid var(--line); white-space:nowrap; }
+  .sev { display:inline-block; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.4px; padding:1px 7px; border-radius:9px; white-space:nowrap; }
+  .sev.info { background:#24313f; color:var(--muted); }
+  .sev.low { background:#22374d; color:var(--plan); }
+  .sev.medium { background:#3b3320; color:var(--warn); }
+  .sev.high, .sev.critical { background:#432724; color:var(--danger); }
+  .band { display:inline-block; font-size:11px; font-weight:700; padding:2px 9px; border-radius:10px; white-space:nowrap; }
+  .band.clean { background:#1e3a2e; color:var(--ok); }
+  .band.low { background:#22374d; color:var(--plan); }
+  .band.medium { background:#3b3320; color:var(--warn); }
+  .band.high { background:#432724; color:var(--danger); }
+  .tag { display:inline-block; font-size:10.5px; padding:1px 7px; border-radius:9px; background:#24313f; color:var(--muted); margin-left:5px; }
+  .tag.ban { background:#432724; color:var(--danger); }
+  .tag.watch { background:#3b3320; color:var(--warn); }
+  .tag.wl { background:#1e3a2e; color:var(--ok); }
+
+  button.act { background:var(--card-2); border:1px solid var(--line); border-radius:7px; padding:6px 12px; cursor:pointer; }
+  button.act:hover { border-color:var(--brand); }
+  button.act.danger { border-color:#5d302b; color:var(--danger); }
+  button.act.danger:hover { background:#2a1b19; }
+  button.act.primary { background:var(--brand); border-color:var(--brand); color:#06222a; font-weight:600; }
+  button.act:disabled { opacity:.45; cursor:not-allowed; }
+  .row { display:flex; gap:9px; align-items:center; flex-wrap:wrap; }
+  input[type=text], input[type=password], input[type=number], input[type=date], select, textarea {
+    background:#101b25; border:1px solid var(--line); border-radius:7px; padding:6px 9px; min-width:0;
+  }
+  input:focus, select:focus, textarea:focus { outline:1px solid var(--brand); }
+  label.f { display:flex; flex-direction:column; gap:3px; font-size:11.5px; color:var(--muted); }
+  .empty { color:var(--muted); padding:14px 0; }
+  .err { color:var(--danger); }
+
+  #gate { max-width:420px; margin:12vh auto; }
+  #gate p { color:var(--muted); font-size:13px; }
+  .hidden { display:none !important; }
+
+  #toast { position:fixed; right:18px; bottom:18px; display:flex; flex-direction:column; gap:8px; z-index:50; }
+  #toast div { background:var(--card-2); border:1px solid var(--line); border-left:3px solid var(--brand); border-radius:7px; padding:9px 14px; max-width:380px; }
+  #toast div.bad { border-left-color:var(--danger); }
+</style>
+</head>
+<body>
+<div id="gate">
+  <div class="card">
+    <h2>Bảng điều khiển chống gian lận</h2>
+    <p>Nhập khoá quản trị (<span class="mono">IsleWarden:AdminKey</span>). Khoá chỉ nằm trong tab này và mất khi bạn đóng tab.</p>
+    <div class="row">
+      <input type="password" id="key" placeholder="Khoá quản trị" style="flex:1" autocomplete="off">
+      <button class="act primary" id="login">Vào</button>
+    </div>
+    <p id="gate-err" class="err"></p>
+    <p class="muted" style="font-size:12px">Chỉ mở trang này qua HTTPS — khoá quản trị đi kèm mọi yêu cầu.</p>
+  </div>
+</div>
+
+<div id="app" class="hidden">
+  <div class="topbar">
+  <header>
+    <h1>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1.6 20.6 4.9v6.3c0 5.6-3.6 9.9-8.6 11.3-5-1.4-8.6-5.7-8.6-11.3V4.9Z" fill="none" stroke="#39b3c6" stroke-width="1.6" stroke-linejoin="round"/><path d="M8.6 10.6 10.9 12.9 15.6 8.2" fill="none" stroke="#e7eef5" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Chống gian lận
+    </h1>
+    <span id="mode" class="tag"></span>
+    <div class="spacer"></div>
+    <label class="row" style="gap:5px; font-size:12px; color:var(--muted)">
+      <input type="checkbox" id="auto"> tự làm mới 15s
+    </label>
+    <button class="act" id="refresh">Làm mới</button>
+    <button class="act" id="logout">Thoát</button>
+  </header>
+
+  <nav id="tabs"></nav>
+  </div>
+  <main id="view"></main>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const S = { key: null, tab: 'overview', window: 14, timer: null, config: null };
+
+const TABS = [
+  ['overview', 'Tổng quan'],
+  ['players', 'Người chơi'],
+  ['reports', 'Báo cáo quét'],
+  ['devices', 'Thiết bị & mã mời'],
+  ['bans', 'Ban list'],
+  ['actions', 'Nhật ký admin'],
+  ['maint', 'Bảo trì']
+];
+
+// Report data comes from the player's machine (process names, paths), so escape it before it goes
+// into HTML; otherwise a crafted file name becomes an XSS hole in the admin page.
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+const $ = id => document.getElementById(id);
+
+function toast(message, bad) {
+  const box = document.createElement('div');
+  if (bad) box.className = 'bad';
+  box.textContent = message;
+  $('toast').appendChild(box);
+  setTimeout(() => box.remove(), 4200);
+}
+
+async function api(path, options = {}) {
+  const res = await fetch('/api/admin' + path, {
+    ...options,
+    headers: { 'X-Admin-Key': S.key, 'Content-Type': 'application/json', ...(options.headers || {}) }
+  });
+  if (res.status === 401) { logout(); throw new Error('Khoá quản trị sai hoặc đã đổi.'); }
+  if (!res.ok) {
+    let message = 'HTTP ' + res.status;
+    try { const body = await res.json(); message = body.error || body.detail || message; } catch {}
+    throw new Error(message);
+  }
+  return res.status === 204 ? null : res.json();
+}
+
+const post = (path, body) => api(path, { method: 'POST', body: JSON.stringify(body || {}) });
+
+function when(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso), now = new Date();
+  const mins = Math.round((now - d) / 60000);
+  if (mins < 1) return 'vừa xong';
+  if (mins < 60) return mins + ' phút trước';
+  if (mins < 60 * 24) return Math.round(mins / 60) + ' giờ trước';
+  if (mins < 60 * 24 * 7) return Math.round(mins / 1440) + ' ngày trước';
+  return d.toLocaleDateString('vi-VN');
+}
+
+const stamp = iso => iso ? new Date(iso).toLocaleString('vi-VN') : '—';
+const bytes = n => n > 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.round(n / 1024) + ' KB';
+const sev = s => `<span class="sev ${esc(s)}">${esc(s)}</span>`;
+// The server sends enums as camelCase strings ("clean" | "low" | "medium" | "high").
+const BANDS = { clean: 'sạch', low: 'thấp', medium: 'trung bình', high: 'cao' };
+const band = (b, score) => `<span class="band ${esc(b)}">${BANDS[b] || b} · ${score}</span>`;
+
+function table(columns, rows, renderRow, onClick) {
+  if (!rows.length) return '<div class="empty">Chưa có dữ liệu.</div>';
+  const head = columns.map(c => `<th>${esc(c)}</th>`).join('');
+  const body = rows.map((row, i) =>
+    `<tr class="${onClick ? 'click' : ''}" data-i="${i}">${renderRow(row)}</tr>`).join('');
+  return `<table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
+}
+
+/** Attaches row click handlers to a table rendered by table(). */
+function wire(root, rows, onClick) {
+  root.querySelectorAll('tr.click').forEach(tr =>
+    tr.addEventListener('click', event => {
+      if (event.target.closest('button')) return; // buttons in the row have their own action
+      onClick(rows[Number(tr.dataset.i)]);
+    }));
+}
+
+async function login(key) {
+  S.key = key;
+  S.config = await api('/config');
+  sessionStorage.setItem('iw-admin-key', key);
+  $('gate').classList.add('hidden');
+  $('app').classList.remove('hidden');
+  $('mode').textContent = `chế độ ${S.config.mode} · thông báo ${S.config.disclosureVersion} · chặn từ ${S.config.enforceThreshold}`;
+  S.window = S.config.risk?.windowDays || 14;
+  renderTabs();
+  show('overview');
+}
+
+function logout() {
+  sessionStorage.removeItem('iw-admin-key');
+  S.key = null;
+  clearInterval(S.timer);
+  $('app').classList.add('hidden');
+  $('gate').classList.remove('hidden');
+}
+
+$('login').addEventListener('click', async () => {
+  $('gate-err').textContent = '';
+  try { await login($('key').value.trim()); }
+  catch (e) { $('gate-err').textContent = e.message; }
+});
+$('key').addEventListener('keydown', e => { if (e.key === 'Enter') $('login').click(); });
+$('logout').addEventListener('click', logout);
+$('refresh').addEventListener('click', () => show(S.tab));
+$('auto').addEventListener('change', e => {
+  clearInterval(S.timer);
+  if (e.target.checked) S.timer = setInterval(() => show(S.tab, true), 15000);
+});
+
+function renderTabs() {
+  $('tabs').innerHTML = TABS.map(([id, label]) =>
+    `<button data-tab="${id}">${esc(label)}</button>`).join('');
+  $('tabs').querySelectorAll('button').forEach(b =>
+    b.addEventListener('click', () => show(b.dataset.tab)));
+}
+
+const VIEWS = {};
+
+async function show(tab, quiet) {
+  S.tab = tab;
+  $('tabs').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
+  if (!quiet) $('view').innerHTML = '<div class="empty">Đang tải…</div>';
+  try { await VIEWS[tab](); }
+  catch (e) { $('view').innerHTML = `<div class="card err">${esc(e.message)}</div>`; }
+}
+
+VIEWS.overview = async () => {
+  const [o, players, reports] = await Promise.all([
+    api('/overview'),
+    api(`/players?window=${S.window}&limit=8`),
+    api('/reports?onlyDirty=true&limit=8')
+  ]);
+
+  const f = o.findingsLast24h || {};
+  const serious = (f.medium || 0) + (f.high || 0) + (f.critical || 0);
+
+  $('view').innerHTML = `
+    <div class="grid" style="margin-bottom:16px">
+      <div class="stat"><div class="v">${o.activeSessions}</div><div class="l">phiên đang chơi</div></div>
+      <div class="stat"><div class="v">${o.playersLast24h}</div><div class="l">người chơi 24h qua</div></div>
+      <div class="stat ${serious ? 'alert' : ''}"><div class="v">${serious}</div><div class="l">phát hiện đáng chú ý 24h</div></div>
+      <div class="stat ${o.highRiskPlayers ? 'alert' : ''}"><div class="v">${o.highRiskPlayers}</div><div class="l">người chơi rủi ro cao</div></div>
+      <div class="stat ${o.pendingDevices ? 'alert' : ''}"><div class="v">${o.pendingDevices}</div><div class="l">thiết bị chờ duyệt</div></div>
+      <div class="stat"><div class="v">${o.activeBans}</div><div class="l">ban còn hiệu lực</div></div>
+      <div class="stat"><div class="v">${o.whitelisted}</div><div class="l">đang trong whitelist</div></div>
+      <div class="stat"><div class="v">${bytes(o.databaseBytes)}</div><div class="l">${o.reportCount.toLocaleString('vi-VN')} báo cáo đã lưu</div></div>
+    </div>
+
+    <div class="card">
+      <h2>Cần xem xét trước</h2>
+      <div id="queue"></div>
+    </div>
+
+    <div class="card">
+      <h2>Báo cáo có phát hiện, mới nhất</h2>
+      <div id="latest"></div>
+    </div>`;
+
+  const risky = players.filter(p => p.score > 0);
+  $('queue').innerHTML = table(
+    ['Steam ID', 'Rủi ro', 'Vì sao', 'Lần cuối', ''],
+    risky,
+    p => `<td class="mono">${esc(p.steamId)}${badges(p)}</td>
+          <td>${band(p.band, p.score)}</td>
+          <td class="muted">${esc((p.reasons || []).join(' · ')) || '—'}</td>
+          <td class="nowrap muted">${when(p.lastSeenUtc)}</td>
+          <td class="right"><button class="act">Hồ sơ</button></td>`,
+    true);
+  wire($('queue'), risky, p => openPlayer(p.steamId));
+
+  $('latest').innerHTML = table(
+    ['Thời điểm', 'Steam ID', 'Phát hiện', 'Nặng nhất'],
+    reports,
+    r => `<td class="nowrap muted">${when(r.receivedUtc)}</td>
+          <td class="mono">${esc(r.steamId)}</td>
+          <td>${r.findingCount} — <span class="chip">${esc(r.topCode || '')}</span></td>
+          <td>${sev(rank(r.worstRank))}</td>`,
+    true);
+  wire($('latest'), reports, r => openReport(r.id));
+};
+
+const RANKS = ['info', 'low', 'medium', 'high', 'critical'];
+const rank = n => RANKS[n] || 'info';
+
+const badges = p =>
+  (p.banned ? '<span class="tag ban">ban</span>' : '') +
+  (p.watched ? '<span class="tag watch">theo dõi</span>' : '') +
+  (p.whitelisted ? '<span class="tag wl">whitelist</span>' : '');
+
+VIEWS.players = async () => {
+  $('view').innerHTML = `
+    <div class="card">
+      <h2>Người chơi</h2>
+      <div class="row" style="margin-bottom:12px">
+        <label class="f">Cửa sổ thời gian
+          <select id="win">
+            ${[7, 14, 30, 90].map(d => `<option value="${d}" ${d === S.window ? 'selected' : ''}>${d} ngày</option>`).join('')}
+          </select>
+        </label>
+        <label class="f">Lọc mức rủi ro
+          <select id="bandf">
+            <option value="">tất cả</option>
+            ${Object.entries(BANDS).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}
+          </select>
+        </label>
+        <label class="f">Tìm Steam ID
+          <input type="text" id="q" placeholder="7656119…">
+        </label>
+      </div>
+      <div id="plist"></div>
+    </div>
+    <div id="pdetail"></div>`;
+
+  const load = async () => {
+    const all = await api(`/players?window=${S.window}&limit=300`);
+    const wanted = $('bandf').value, query = $('q').value.trim();
+    const rows = all.filter(p =>
+      (!wanted || p.band === wanted) && (!query || p.steamId.includes(query)));
+
+    $('plist').innerHTML = table(
+      ['Steam ID', 'Rủi ro', 'Vì sao', 'Phiên', 'Thiết bị', 'Lần cuối'],
+      rows,
+      p => `<td class="mono">${esc(p.steamId)}${badges(p)}</td>
+            <td>${band(p.band, p.score)}</td>
+            <td class="muted">${esc((p.reasons || []).join(' · ')) || '—'}</td>
+            <td>${p.sessions}</td>
+            <td>${p.devices}</td>
+            <td class="nowrap muted">${when(p.lastSeenUtc)}</td>`,
+      true);
+    wire($('plist'), rows, p => openPlayer(p.steamId));
+  };
+
+  $('win').addEventListener('change', e => { S.window = Number(e.target.value); load(); });
+  $('bandf').addEventListener('change', load);
+  $('q').addEventListener('input', load);
+  await load();
+};
+
+async function openPlayer(steamId) {
+  if (S.tab !== 'players') { await show('players'); }
+  const box = $('pdetail');
+  box.innerHTML = '<div class="card">Đang tải hồ sơ…</div>';
+
+  const p = await api(`/players/${encodeURIComponent(steamId)}?window=${S.window}`);
+  const active = p.sessions.filter(s => s.state === 'Active');
+
+  box.innerHTML = `
+    <div class="card">
+      <h2>Hồ sơ · <span class="mono">${esc(p.steamId)}</span></h2>
+      <div class="row" style="margin-bottom:10px">
+        ${band(p.risk.band, p.risk.score)}
+        ${p.banned ? '<span class="tag ban">đang bị ban</span>' : ''}
+        ${p.watched ? '<span class="tag watch">đang theo dõi</span>' : ''}
+        ${p.whitelisted ? '<span class="tag wl">trong whitelist</span>' : ''}
+      </div>
+      <div class="muted" style="font-size:12.5px">
+        ${p.risk.reasons.length ? p.risk.reasons.map(esc).join('<br>') : 'Không có phát hiện nào trong cửa sổ đang xem.'}
+      </div>
+
+      <h3>Quyết định</h3>
+      <div class="row">
+        <label class="f">Phạm vi ban
+          <select id="scope">
+            <option value="steam">chỉ Steam ID</option>
+            <option value="device" selected>Steam ID + thiết bị</option>
+            <option value="all">+ cả linh kiện (chống lách bằng máy khác)</option>
+          </select>
+        </label>
+        <label class="f">Hết hạn (trống = vĩnh viễn)
+          <input type="date" id="until">
+        </label>
+        <label class="f" style="flex:1; min-width:220px">Lý do (người chơi sẽ thấy)
+          <input type="text" id="reason" placeholder="Ví dụ: chạy Cheat Engine trong lúc chơi">
+        </label>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <button class="act danger" id="ban">Ban</button>
+        <button class="act" id="unban" ${p.banned ? '' : 'disabled'}>Gỡ ban</button>
+        <button class="act" id="watch">${p.watched ? 'Bỏ theo dõi' : 'Đánh dấu theo dõi'}</button>
+        <button class="act" id="note">Thêm ghi chú</button>
+        ${active.length ? `<button class="act danger" id="kick">Thu hồi phiên đang chơi</button>` : ''}
+      </div>
+      <p class="muted" style="font-size:12px; margin-bottom:0">
+        Ban lấy phát hiện nặng nhất trong cửa sổ làm bằng chứng và ghi vào nhật ký admin.
+      </p>
+    </div>
+
+    <div class="card">
+      <h2>Phần mềm bị gắn cờ</h2>
+      <p class="muted" style="font-size:12.5px; margin-top:-6px">
+        Gộp theo nội dung: một công cụ chạy suốt phiên chỉ hiện một dòng, cột “lần” cho biết số báo cáo đã ghi nhận.
+      </p>
+      ${table(['Mã', 'Mức', 'Phát hiện', 'Chi tiết', 'Lần', 'Gần nhất'], p.software,
+        s => `<td><span class="chip">${esc(s.code)}</span></td>
+              <td>${sev(s.severity)}</td>
+              <td>${esc(s.message)}</td>
+              <td class="mono muted">${esc(s.detail || '—')}</td>
+              <td>${s.hits}</td>
+              <td class="nowrap muted">${when(s.lastUtc)}</td>`)}
+    </div>
+
+    <div class="card">
+      <h2>Thiết bị</h2>
+      <div id="pdev"></div>
+      <h2 style="margin-top:20px">Phiên gần đây</h2>
+      <div id="psess"></div>
+      <h2 style="margin-top:20px">Nhật ký thao tác với người chơi này</h2>
+      ${table(['Thời điểm', 'Thao tác', 'Ghi chú'], p.actions,
+        a => `<td class="nowrap muted">${stamp(a.createdUtc)}</td>
+              <td><span class="chip">${esc(a.action)}</span></td>
+              <td class="muted">${esc(a.note || '—')}</td>`)}
+    </div>`;
+
+  $('pdev').innerHTML = table(
+    ['Thiết bị', 'Tên máy', 'Trạng thái', 'Thông báo đã đồng ý', 'Đăng ký', ''],
+    p.devices,
+    d => `<td class="mono">${esc(d.deviceId.slice(0, 12))}…</td>
+          <td>${esc(d.machineName)}</td>
+          <td>${esc(d.status)}</td>
+          <td class="mono muted">${esc(d.consentVersion)}</td>
+          <td class="nowrap muted">${when(d.createdUtc)}</td>
+          <td class="right">${d.status === 'Pending'
+            ? `<button class="act" data-approve="${esc(d.deviceId)}">Duyệt</button>
+               <button class="act danger" data-reject="${esc(d.deviceId)}">Từ chối</button>` : ''}</td>`);
+
+  $('psess').innerHTML = table(
+    ['Bắt đầu', 'Trạng thái', 'Heartbeat cuối', 'Phiên'],
+    p.sessions,
+    s => `<td class="nowrap muted">${stamp(s.startedUtc)}</td>
+          <td>${esc(s.state)}</td>
+          <td class="nowrap muted">${when(s.lastHeartbeatUtc)}</td>
+          <td class="mono muted">${esc(s.sessionId.slice(0, 10))}…</td>`);
+
+  const reload = () => openPlayer(steamId);
+  const guard = fn => async () => {
+    try { await fn(); toast('Đã ghi nhận.'); reload(); }
+    catch (e) { toast(e.message, true); }
+  };
+
+  const worst = p.software[0];
+  $('ban').addEventListener('click', guard(() => post(`/players/${encodeURIComponent(steamId)}/ban`, {
+    reason: $('reason').value.trim() || null,
+    expiresUtc: $('until').value ? new Date($('until').value + 'T23:59:59Z').toISOString() : null,
+    scope: $('scope').value,
+    evidence: worst ? `${worst.code}: ${worst.message}` : 'không kèm báo cáo'
+  })));
+
+  $('unban').addEventListener('click', guard(() => post(`/players/${encodeURIComponent(steamId)}/unban`, {
+    note: $('reason').value.trim() || null
+  })));
+
+  $('watch').addEventListener('click', guard(() => post(`/players/${encodeURIComponent(steamId)}/watch`, {
+    watch: !p.watched, note: $('reason').value.trim() || null
+  })));
+
+  $('note').addEventListener('click', guard(() => {
+    const text = prompt('Ghi chú về người chơi này:');
+    if (!text) throw new Error('Đã huỷ.');
+    return post(`/players/${encodeURIComponent(steamId)}/note`, { note: text });
+  }));
+
+  if (active.length) {
+    $('kick').addEventListener('click', guard(() =>
+      Promise.all(active.map(s => post(`/sessions/${encodeURIComponent(s.sessionId)}/revoke`, { note: 'admin thu hồi từ bảng điều khiển' })))));
+  }
+
+  box.querySelectorAll('[data-approve]').forEach(b => b.addEventListener('click',
+    guard(() => post(`/devices/${encodeURIComponent(b.dataset.approve)}/approve`))));
+  box.querySelectorAll('[data-reject]').forEach(b => b.addEventListener('click',
+    guard(() => post(`/devices/${encodeURIComponent(b.dataset.reject)}/reject`))));
+
+  box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+VIEWS.reports = async () => {
+  $('view').innerHTML = `
+    <div class="card">
+      <h2>Báo cáo quét</h2>
+      <div class="row" style="margin-bottom:12px">
+        <label class="f">Steam ID<input type="text" id="rsteam" placeholder="tất cả"></label>
+        <label class="f">Mã phát hiện
+          <select id="rcode">
+            <option value="">tất cả</option>
+            ${(S.config.codes || []).map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('')}
+          </select>
+        </label>
+        <label class="f">Mức tối thiểu
+          <select id="rrank">
+            <option value="">tất cả</option>
+            ${RANKS.map((r, i) => `<option value="${i}">${r}</option>`).join('')}
+          </select>
+        </label>
+        <label class="f">Số dòng<input type="number" id="rlimit" value="100" min="10" max="500" style="width:90px"></label>
+        <label class="f" style="flex-direction:row; align-items:center; gap:6px; margin-top:14px">
+          <input type="checkbox" id="rdirty"> chỉ báo cáo có phát hiện
+        </label>
+        <button class="act" id="rgo" style="margin-top:12px">Lọc</button>
+      </div>
+      <div id="rlist"></div>
+    </div>
+    <div id="rdetail"></div>`;
+
+  const load = async () => {
+    const params = new URLSearchParams({ limit: $('rlimit').value || 100 });
+    if ($('rsteam').value.trim()) params.set('steamId', $('rsteam').value.trim());
+    if ($('rcode').value) params.set('code', $('rcode').value);
+    if ($('rrank').value) params.set('minRank', $('rrank').value);
+    if ($('rdirty').checked) params.set('onlyDirty', 'true');
+
+    const rows = await api('/reports?' + params);
+    $('rlist').innerHTML = table(
+      ['#', 'Thời điểm', 'Steam ID', 'Kết quả', 'Phát hiện', 'Nặng nhất'],
+      rows,
+      r => `<td class="mono muted">${r.id}</td>
+            <td class="nowrap muted">${stamp(r.receivedUtc)}</td>
+            <td class="mono">${esc(r.steamId)}</td>
+            <td>${r.clean ? '<span class="band clean">sạch</span>' : '<span class="band medium">có phát hiện</span>'}</td>
+            <td>${r.findingCount}${r.topCode ? ` · <span class="chip">${esc(r.topCode)}</span>` : ''}</td>
+            <td>${r.findingCount ? sev(rank(r.worstRank)) : '—'}</td>`,
+      true);
+    wire($('rlist'), rows, r => openReport(r.id));
+  };
+
+  $('rgo').addEventListener('click', load);
+  await load();
+};
+
+async function openReport(id) {
+  if (S.tab !== 'reports') await show('reports');
+  const box = $('rdetail');
+  box.innerHTML = '<div class="card">Đang tải báo cáo…</div>';
+  const r = await api(`/reports/${id}`);
+
+  box.innerHTML = `
+    <div class="card">
+      <h2>Báo cáo #${r.summary.id}</h2>
+      <div class="row muted" style="font-size:12.5px; margin-bottom:12px">
+        <span>${stamp(r.summary.receivedUtc)}</span> ·
+        <span class="mono">${esc(r.summary.steamId)}</span> ·
+        <span>phiên <span class="mono">${esc(r.summary.sessionId.slice(0, 10))}…</span></span>
+        <button class="act" id="rplayer">Mở hồ sơ người chơi</button>
+      </div>
+      ${table(['Mã', 'Mức', 'Thông điệp', 'Chi tiết'], r.findings,
+        f => `<td><span class="chip">${esc(f.code)}</span></td>
+              <td>${sev(String(f.severity).toLowerCase())}</td>
+              <td>${esc(f.message)}</td>
+              <td class="mono muted">${esc(f.detail || '—')}</td>`)}
+
+      <h3>Phần mềm đang chạy lúc quét</h3>
+      <p class="muted" style="font-size:12.5px; margin-top:-4px">
+        Chỉ là <b>tên</b> tiến trình, đúng phạm vi đã công bố với người chơi. Mỗi lần xem đều được ghi vào nhật ký admin.
+      </p>
+      <button class="act" id="rproc">Xem danh sách</button>
+      <div id="procs" style="margin-top:10px"></div>
+    </div>`;
+
+  $('rplayer').addEventListener('click', () => openPlayer(r.summary.steamId));
+  $('rproc').addEventListener('click', async () => {
+    try {
+      const full = await api(`/reports/${id}?processes=true`);
+      const list = full.processes || [];
+      $('procs').innerHTML = list.length
+        ? `<div class="mono muted" style="column-count:3; column-gap:20px">${list.map(p => esc(p)).join('<br>')}</div>`
+        : '<div class="empty">Báo cáo này không kèm danh sách phần mềm (policy không bật).</div>';
+      $('rproc').disabled = true;
+    } catch (e) { toast(e.message, true); }
+  });
+
+  box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+VIEWS.devices = async () => {
+  const devices = await api('/devices');
+  const pending = devices.filter(d => d.status === 'Pending');
+
+  $('view').innerHTML = `
+    <div class="card">
+      <h2>Cấp mã mời</h2>
+      <div class="row">
+        <label class="f">Steam ID<input type="text" id="isteam" placeholder="7656119…"></label>
+        <label class="f" style="flex:1">Ghi chú<input type="text" id="inote" placeholder="tên người chơi, kênh liên hệ…"></label>
+        <button class="act primary" id="imake" style="margin-top:14px">Tạo mã</button>
+      </div>
+      <div id="icode" style="margin-top:10px"></div>
+    </div>
+
+    <div class="card">
+      <h2>Chờ duyệt (${pending.length})</h2>
+      <div id="dpend"></div>
+    </div>
+
+    <div class="card">
+      <h2>Tất cả thiết bị (${devices.length})</h2>
+      <div id="dall"></div>
+    </div>`;
+
+  const cols = ['Thiết bị', 'Steam ID', 'Tên máy', 'Trạng thái', 'Thông báo', 'Đăng ký', ''];
+  const row = d => `<td class="mono">${esc(d.deviceId.slice(0, 12))}…</td>
+        <td class="mono">${esc(d.steamId)}</td>
+        <td>${esc(d.machineName)}</td>
+        <td>${esc(d.status)}</td>
+        <td class="mono muted">${esc(d.consentVersion)}</td>
+        <td class="nowrap muted">${when(d.createdUtc)}</td>
+        <td class="right">
+          ${d.status !== 'Approved' ? `<button class="act" data-approve="${esc(d.deviceId)}">Duyệt</button>` : ''}
+          ${d.status !== 'Rejected' ? `<button class="act danger" data-reject="${esc(d.deviceId)}">Từ chối</button>` : ''}
+        </td>`;
+
+  $('dpend').innerHTML = table(cols, pending, row, true);
+  $('dall').innerHTML = table(cols, devices, row, true);
+  wire($('dpend'), pending, d => openPlayer(d.steamId));
+  wire($('dall'), devices, d => openPlayer(d.steamId));
+
+  const act = async (path) => { try { await post(path); toast('Đã cập nhật.'); show('devices'); } catch (e) { toast(e.message, true); } };
+  document.querySelectorAll('[data-approve]').forEach(b =>
+    b.addEventListener('click', () => act(`/devices/${encodeURIComponent(b.dataset.approve)}/approve`)));
+  document.querySelectorAll('[data-reject]').forEach(b =>
+    b.addEventListener('click', () => act(`/devices/${encodeURIComponent(b.dataset.reject)}/reject`)));
+
+  $('imake').addEventListener('click', async () => {
+    try {
+      const result = await post('/invites', { steamId: $('isteam').value.trim(), note: $('inote').value.trim() || null });
+      $('icode').innerHTML = `<div class="stat"><div class="v mono">${esc(result.code)}</div>
+        <div class="l">gửi mã này cho ${esc(result.steamId)} — dùng được một lần</div></div>`;
+    } catch (e) { toast(e.message, true); }
+  });
+};
+
+VIEWS.bans = async () => {
+  const bans = await api('/bans');
+  const now = Date.now();
+
+  $('view').innerHTML = `
+    <div class="card">
+      <h2>Thêm ban thủ công</h2>
+      <div class="row">
+        <label class="f">Loại
+          <select id="btype">
+            <option value="steam_id">Steam ID</option>
+            <option value="device">Thiết bị</option>
+            <option value="component">Linh kiện (hash)</option>
+          </select>
+        </label>
+        <label class="f" style="flex:1">Giá trị<input type="text" id="bvalue"></label>
+        <label class="f" style="flex:1">Lý do<input type="text" id="breason"></label>
+        <button class="act danger" id="badd" style="margin-top:14px">Thêm</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Ban list (${bans.length})</h2>
+      <div id="blist"></div>
+    </div>`;
+
+  $('blist').innerHTML = table(
+    ['Loại', 'Giá trị', 'Lý do', 'Tạo lúc', 'Hết hạn', ''],
+    bans,
+    b => `<td><span class="chip">${esc(b.subjectType)}</span></td>
+          <td class="mono">${esc(b.subjectValue.length > 28 ? b.subjectValue.slice(0, 28) + '…' : b.subjectValue)}</td>
+          <td>${esc(b.reason || '—')}</td>
+          <td class="nowrap muted">${stamp(b.createdUtc)}</td>
+          <td class="nowrap muted">${b.expiresUtc
+            ? (new Date(b.expiresUtc) < now ? '<span class="muted">đã hết</span>' : stamp(b.expiresUtc))
+            : 'vĩnh viễn'}</td>
+          <td class="right"><button class="act" data-del="${b.id}">Gỡ</button></td>`);
+
+  document.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', async () => {
+    try { await api(`/bans/${b.dataset.del}`, { method: 'DELETE' }); toast('Đã gỡ.'); show('bans'); }
+    catch (e) { toast(e.message, true); }
+  }));
+
+  $('badd').addEventListener('click', async () => {
+    try {
+      await post('/bans', {
+        subjectType: $('btype').value,
+        subjectValue: $('bvalue').value.trim(),
+        reason: $('breason').value.trim() || null
+      });
+      toast('Đã thêm.'); show('bans');
+    } catch (e) { toast(e.message, true); }
+  });
+};
+
+VIEWS.actions = async () => {
+  const actions = await api('/actions?limit=200');
+  $('view').innerHTML = `
+    <div class="card">
+      <h2>Nhật ký thao tác</h2>
+      <p class="muted" style="font-size:12.5px; margin-top:-6px">
+        Mọi quyết định và mọi lần xem danh sách phần mềm đều nằm ở đây — để trả lời được câu “tại sao tôi bị ban”.
+      </p>
+      ${table(['Thời điểm', 'Thao tác', 'Đối tượng', 'Ghi chú', 'Báo cáo'], actions,
+        a => `<td class="nowrap muted">${stamp(a.createdUtc)}</td>
+              <td><span class="chip">${esc(a.action)}</span></td>
+              <td class="mono">${esc(a.subjectValue)}</td>
+              <td class="muted">${esc(a.note || '—')}</td>
+              <td class="mono muted">${a.reportId ? '#' + a.reportId : '—'}</td>`)}
+    </div>`;
+};
+
+VIEWS.maint = async () => {
+  const o = await api('/overview');
+  const c = S.config;
+
+  $('view').innerHTML = `
+    <div class="card">
+      <h2>Dung lượng và hạn lưu trữ</h2>
+      <div class="grid">
+        <div class="stat"><div class="v">${bytes(o.databaseBytes)}</div><div class="l">kích thước database</div></div>
+        <div class="stat"><div class="v">${o.reportCount.toLocaleString('vi-VN')}</div><div class="l">báo cáo đang lưu</div></div>
+        <div class="stat"><div class="v">${o.oldestReportUtc ? when(o.oldestReportUtc) : '—'}</div><div class="l">báo cáo cũ nhất</div></div>
+      </div>
+      <h3>Dọn báo cáo cũ</h3>
+      <p class="muted" style="font-size:12.5px; margin-top:-4px">
+        Launcher gửi báo cáo mỗi ${c.heartbeatSeconds} giây nên bảng này phình rất nhanh. Bằng chứng đã gắn vào
+        ban vẫn được giữ lại dạng tóm tắt sau khi báo cáo gốc bị xoá.
+      </p>
+      <div class="row">
+        <label class="f">Xoá báo cáo cũ hơn<input type="number" id="pdays" value="30" min="1" style="width:100px"></label>
+        <span class="muted" style="margin-top:16px">ngày</span>
+        <button class="act danger" id="pgo" style="margin-top:14px">Dọn</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Cấu hình đang chạy</h2>
+      ${table(['Mục', 'Giá trị'], [
+        ['Chế độ', c.mode],
+        ['Phiên bản thông báo', c.disclosureVersion],
+        ['Ngưỡng chặn tự động', c.enforceThreshold],
+        ['Chu kỳ heartbeat', c.heartbeatSeconds + ' giây'],
+        ['Tự duyệt thiết bị mới', c.autoApproveDevices ? 'có' : 'không'],
+        ['Đồng bộ whitelist', c.whitelistMode],
+        ['Cửa sổ chấm rủi ro', c.risk.windowDays + ' ngày, bán rã ' + c.risk.halfLifeDays + ' ngày']
+      ], r => `<td>${esc(r[0])}</td><td class="mono">${esc(r[1])}</td>`)}
+      <p class="muted" style="font-size:12.5px">
+        Sửa các giá trị này trong <span class="mono">appsettings.json</span> / <span class="mono">server-policy.json</span> rồi khởi động lại server.
+      </p>
+    </div>`;
+
+  $('pgo').addEventListener('click', async () => {
+    const days = Number($('pdays').value);
+    if (!confirm(`Xoá toàn bộ báo cáo cũ hơn ${days} ngày? Không khôi phục được.`)) return;
+    try {
+      const result = await post('/maintenance/prune', { days });
+      toast(`Đã xoá ${result.deleted} báo cáo.`);
+      show('maint');
+    } catch (e) { toast(e.message, true); }
+  });
+};
+
+const saved = sessionStorage.getItem('iw-admin-key');
+if (saved) login(saved).catch(() => logout());
+</script>
+</body>
+</html>

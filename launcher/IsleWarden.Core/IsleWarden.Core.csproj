@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- net10.0 rather than net10.0-windows: it was shared with the C# server, which ran on Linux. Only the
+         Windows launcher uses it now (the server is Python, in server/), but it still builds anywhere because
+         Windows-only APIs (Registry, WinVerifyTrust, WMI) are guarded with OperatingSystem.IsWindows()
+         and return null or are skipped on other platforms instead of throwing. -->
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- WMI, used to read hardware serials (Windows only, launcher side). -->
+    <PackageReference Include="System.Management" Version="10.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="IsleWarden.Core.Tests" />
+  </ItemGroup>
+
+</Project>
