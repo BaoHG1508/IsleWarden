@@ -71,8 +71,13 @@ Toàn bộ solution build sạch (0 cảnh báo/lỗi); 79 test Core + 65 test S
 - [x] Tự duyệt máy, trừ máy có cờ rủi ro (trùng linh kiện với Steam ID khác hoặc tài khoản đang bị ban, không có
       fingerprint) → chờ admin, kèm lý do trên trang quản trị.
 - [x] Không ban hay so trùng theo `cpuId` (mọi CPU cùng đời trả cùng giá trị).
+- [x] **Lưới kick** (`server/islewarden_server/enforcer.py`, 26/09/2026): định kỳ đọc `playerlist` (0x40) qua RCON,
+      kick (0x30) Steam ID đang online mà không có suất chơi sau `KickGraceSeconds`; người đang bị ban bị kick ngay;
+      `ExemptSteamIds` cho staff. Tắt mặc định (`Whitelist:KickWithoutLease`); RCON lỗi thì không kick ai và báo Discord.
+      Vẫn giữ whitelist của game làm lớp chính — xem mục [Whitelist on or off](REFERENCE.md#whitelist-on-or-off).
 - [ ] Kiểm chứng với server thật: gỡ whitelist có đá người đang chơi không; RCON `kick` 0x30
-      (`Whitelist:KickOnRevoke`, đang tắt mặc định) — `docs/TEST-WITH-REAL-SERVER.md` mục 3, bước 8–9.
+      (`Whitelist:KickOnRevoke`, đang tắt mặc định) — `docs/TEST-WITH-REAL-SERVER.md` mục 3, bước 8–9; RCON
+      `playerlist` 0x40 và định dạng câu trả lời của nó (`Whitelist:KickWithoutLease`) — bước 14–15.
 - Cố ý không làm: trial, hàng chờ/ưu tiên (dùng `bQueueEnabled` + `VIPs=` sẵn có của Evrima), thu hồi slot người
   treo máy (cần dữ liệu trong game) — lý do ở `ACCESS-CONTROL-REFERENCE.md` §6.7.
 - [ ] Proxy-DLL cạnh exe game + kiểm tra tinh chỉnh INI (`r.Fog`, `grass.DensityScale`…).

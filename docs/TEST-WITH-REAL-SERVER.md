@@ -28,7 +28,13 @@ Lệnh đầu test launcher và thư viện quét (C#); lệnh sau test server (
 - tham số nhiều giá trị giữ nguyên dấu phẩy, không bị escape;
 - server game **không trả lời** → client coi như đã gửi xong (không ném lỗi);
 - RCON **không kết nối được** → người chơi sạch vẫn được cấp token và bảng `whitelist`
-  vẫn đúng, chỉ ghi log lỗi.
+  vẫn đúng, chỉ ghi log lỗi;
+- câu trả lời `playerlist` bị chia thành nhiều gói vẫn được đọc đủ.
+
+`test_enforcer.py` kiểm tra lưới kick (`KickWithoutLease`) với danh sách người chơi giả và đồng hồ giả:
+đủ thời gian ân hạn mới kick, người có suất chơi và staff trong `ExemptSteamIds` không bị đụng tới, người đang
+bị ban bị kick ngay, người vừa bị kick vào lại thì không được ân hạn lần hai, RCON lỗi hoặc danh sách không có
+Steam ID thì không kick ai.
 
 Điểm cuối quan trọng nhất: server game sai cổng hoặc đang sập thì luồng cấp token không
 được sập theo.
@@ -65,6 +71,15 @@ frame kick — lý do là đúng nhãn của hệ thống đã ngắt (mất tí
 ```
 [01:12:09]   exec 0x83 removewhitelist  arg="76561198000000001"
 [01:12:09]   exec 0x30 kick             arg="76561198000000001,Launcher đã trả suất chơi."
+```
+
+Muốn xem lưới kick chạy thì thêm `--players 76561198000000002` cho mock (mock sẽ báo Steam ID đó đang online) và
+`$env:IsleWarden__Whitelist__KickWithoutLease = "true"` cho server. Cứ 20 giây mock in một frame `playerlist`, và
+sau `KickGraceSeconds` thì kick Steam ID đó vì nó không có suất chơi:
+
+```
+[03:47:53]   exec 0x40 playerlist       arg=""
+[03:47:59]   exec 0x30 kick             arg="76561198000000002,Không có suất chơi: mở launcher IsleWarden và đăng nhập Steam + Discord rồi vào lại."
 ```
 
 ### 1.3 Mode `file`
@@ -194,9 +209,12 @@ yên tâm về tỉ lệ báo nhầm.
 | 11 | Đang chơi, **kill** launcher bằng Task Manager rồi mở lại `play` trong < 75 giây | Launcher báo "Đã nối lại suất chơi", không rớt khỏi server, không sinh `game-started-before-launcher` |
 | 12 | Cấp miễn trừ anti-cheat cho một Steam ID, chạy công cụ bị chặn rồi `play` (Enforce) | Được vào, launcher in `[miễn trừ] Anti-cheat`; báo cáo vẫn ghi, Discord ghi "đang được miễn trừ" |
 | 13 | Đang chơi, gỡ role được vào chơi trong Discord | Trong vòng `Discord.RoleRecheckMinutes` suất chơi kết thúc với mã `discord-role-missing`; `login` và `play` bị từ chối cho tới khi có lại role |
+| 14 | Bật `KickWithoutLease=true`, vào game **không mở launcher** bằng một Steam ID có trong `WhitelistIDs=` nhưng không có trong `ExemptSteamIds` (hoặc chạy server game với `bServerWhitelist=false`) | Log server cho thấy `playerlist` thấy bạn, khoảng `KickGraceSeconds` sau thì bị kick. Nếu log báo `playerlist` không có Steam ID nào thì định dạng trả lời khác với mô tả của các thư viện — ghi lại câu trả lời mà log in ra |
+| 15 | Vẫn bật `KickWithoutLease`, làm hỏng RCON (sai mật khẩu hoặc cổng) rồi vào game không mở launcher | Không ai bị kick; sau 3 lần đọc lỗi, kênh Discord nhận cảnh báo "không kick được" |
 
 Bước 7 là bước dễ bị bỏ qua nhất và cũng là bước dễ gây sự cố thật nhất. Bước 8–9 trả lời câu hỏi quan trọng nhất
-còn bỏ ngỏ: thu hồi suất chơi có thực sự đưa người chơi ra khỏi server hay không.
+còn bỏ ngỏ: thu hồi suất chơi có thực sự đưa người chơi ra khỏi server hay không. Bước 14–15 quyết định có bật được
+lưới kick hay không.
 
 Xem `docs/SERVER-SETUP.md` cho lệnh cụ thể của từng endpoint quản trị.
 
@@ -227,7 +245,9 @@ nhưng cũng có nghĩa là tầng chống sửa file tạm thời không bảo 
 | RCON gửi thành công nhưng không ai vào được | `bServerWhitelist` còn `false` trong `Game.ini` |
 | Sửa `Game.ini` xong khởi động lại thì mất thay đổi | Sửa lúc server đang chạy — Evrima ghi lại config khi shutdown |
 | Restart server xong người đang chơi không rejoin được | Whitelist qua RCON chỉ sống trong RAM; cần đẩy lại tập phiên đang hoạt động |
-| Bị thu hồi phiên nhưng người chơi vẫn ở trong server | Gỡ whitelist có thể chỉ chặn lần vào sau — thử `Whitelist:KickOnRevoke=true` (bước 9 ở mục 3) |
+| Bị thu hồi phiên nhưng người chơi vẫn ở trong server | Gỡ whitelist có thể chỉ chặn lần vào sau — thử `Whitelist:KickOnRevoke=true` (bước 9 ở mục 3) hoặc `Whitelist:KickWithoutLease=true` (bước 14) |
+| Bật `KickWithoutLease` rồi staff bị kick | Steam ID của họ chưa có trong `Whitelist:ExemptSteamIds` |
+| Bật `KickWithoutLease` mà không ai bị kick | `Whitelist:Mode` không phải `rcon`, RCON lỗi (xem cảnh báo Discord), hoặc câu trả lời `playerlist` không có SteamID64 (log server in ra câu trả lời) |
 | `AdminsSteamIDs`/`WhitelistIDs`/`VIPs` không có tác dụng | Đặt trong `TIGameSession` thay vì `TIGameStateBase` — bị bỏ qua âm thầm |
 | Tick rate thất thường | Evrima nhạy với single-thread; đừng chạy server chung máy với client khi test đông |
 

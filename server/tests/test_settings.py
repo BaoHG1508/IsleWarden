@@ -57,6 +57,21 @@ def test_role_lists_come_from_a_json_array_or_indexed_variables(tmp_path):
     assert overridden.discord.required_role_ids == ["111", "999", "333", "444"]  # by position, like .NET
 
 
+def test_kick_without_lease_is_off_by_default_and_reads_its_exempt_list(tmp_path):
+    config = tmp_path / "appsettings.json"
+    write(config, {"Whitelist": {"KickWithoutLease": True, "KickGraceSeconds": 90,
+                                 "ExemptSteamIds": ["76561198000000001"]}})
+
+    defaults = load_settings(None, environ={})
+    configured = load_settings(config, environ={"IsleWarden__Whitelist__ExemptSteamIds__1": "76561198000000002"})
+
+    assert (defaults.whitelist.kick_without_lease, defaults.whitelist.kick_poll_seconds,
+            defaults.whitelist.kick_grace_seconds, defaults.whitelist.exempt_steam_ids) == (False, 20, 60, [])
+    assert configured.whitelist.kick_without_lease is True
+    assert configured.whitelist.kick_grace_seconds == 90
+    assert configured.whitelist.exempt_steam_ids == ["76561198000000001", "76561198000000002"]
+
+
 def test_discord_is_required_by_default():
     settings = load_settings(None, environ={})
 

@@ -6,6 +6,7 @@ call returns, its frame is already in `frames`.
 
 import socket
 import threading
+import time
 from typing import NamedTuple
 
 AUTH_REPLY = "Password Accepted"
@@ -27,9 +28,15 @@ class RconFrame(NamedTuple):
 
 
 class FakeEvrimaRconServer:
-    def __init__(self, silent_to_commands: bool = False, command_reply: str = DEFAULT_COMMAND_REPLY):
+    def __init__(self, silent_to_commands: bool = False, command_reply: str = DEFAULT_COMMAND_REPLY,
+                 replies: dict[int, str] | None = None, chunk_size: int | None = None):
+        """replies: a reply per opcode (the player list, say), changeable while the server runs. chunk_size sends
+        every reply in pieces of that many bytes with a short pause between them, like a long reply on a real
+        network."""
         self._silent = silent_to_commands
         self._command_reply = command_reply
+        self.replies = dict(replies or {})
+        self._chunk_size = chunk_size
         self._frames: list[RconFrame] = []
         self._lock = threading.Lock()
         self._listener = socket.create_server(("127.0.0.1", 0))
@@ -86,9 +93,17 @@ class FakeEvrimaRconServer:
                     with self._lock:
                         self._frames.append(frame)
                     reply = None if frame.is_command and self._silent else (
-                        self._command_reply if frame.is_command else AUTH_REPLY)
+                        self.replies.get(frame.opcode, self._command_reply) if frame.is_command else AUTH_REPLY)
                     if reply is not None:
-                        connection.sendall(reply.encode("utf-8"))
+                        self._send(connection, reply.encode("utf-8"))
+
+    def _send(self, connection: socket.socket, data: bytes) -> None:
+        if not self._chunk_size:
+            connection.sendall(data)
+            return
+        for start in range(0, len(data), self._chunk_size):
+            connection.sendall(data[start:start + self._chunk_size])
+            time.sleep(0.05)
 
 
 def _decode(frame: bytes) -> RconFrame:

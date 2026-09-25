@@ -47,6 +47,27 @@ def test_kick_sends_opcode_30_with_a_reason_that_cannot_split_the_arguments():
         assert command.payload == f"{STEAM_ID},Mất tín hiệu  launcher đã tắt"
 
 
+def test_player_list_sends_opcode_40_and_reads_a_reply_split_over_packets():
+    # A full server's list is a few KB: more than one recv, so the client must keep reading until it goes quiet.
+    steam_ids = [f"765611980000{n:05d}" for n in range(100)]
+    reply = "PlayerList\n" + ",".join(f"Dino {n}" for n in range(100)) + ",\n" + ",".join(steam_ids) + ",\n"
+    with FakeEvrimaRconServer(replies={rcon.OP_PLAYER_LIST: reply}, chunk_size=700) as fake:
+        response = EvrimaRconClient("127.0.0.1", fake.port, PASSWORD).player_list()
+
+        [command] = fake.commands
+        assert (command.opcode, command.payload) == (rcon.OP_PLAYER_LIST, "")
+        assert rcon.parse_steam_ids(response) == steam_ids
+
+
+def test_parse_steam_ids_keeps_order_and_skips_repeats_and_other_numbers():
+    reply = ("[2026.09.26-12.00.00] PlayerList\nRex,Spino 76561198000000009x,\n"
+             "76561198000000001,76561198000000002,76561198000000001,\n"
+             "12345678901234567,765611980000000011,EOS:0002a5c3d1e04f")
+
+    assert rcon.parse_steam_ids(reply) == ["76561198000000009", "76561198000000001", "76561198000000002"]
+    assert rcon.parse_steam_ids("") == []
+
+
 def test_multi_value_arguments_keep_their_commas():
     with FakeEvrimaRconServer() as fake:
         EvrimaRconClient("127.0.0.1", fake.port, PASSWORD).announce("mot,hai,ba")

@@ -36,6 +36,8 @@ Cấu hình đọc từ `appsettings.json` mục `IsleWarden`, hoặc ghi đè b
 | `AllowAntiCheatBypass` | Công tắc tổng cho miễn trừ anti-cheat (mục 5). `false` = mọi miễn trừ mất tác dụng ngay, ví dụ trong giải đấu. Mặc định `true`. |
 | `Whitelist.Mode` | `none` (chỉ log) · `rcon` · `file`. |
 | `Whitelist.KickOnRevoke` | Gửi thêm RCON `kick` (0x30) khi suất chơi cuối của người chơi kết thúc. **Opcode chưa kiểm chứng với server thật** — mặc định `false`, xem `TEST-WITH-REAL-SERVER.md` mục 3 trước khi bật. |
+| `Whitelist.KickWithoutLease` | Lưới an toàn: cứ `KickPollSeconds` giây (mặc định 20) server hỏi game ai đang online bằng RCON `playerlist` (0x40), rồi kick (0x30) Steam ID nào không có suất chơi sau `KickGraceSeconds` giây (mặc định 60). Người đang bị ban bị kick ngay. **Cả hai opcode chưa kiểm chứng với server thật** — mặc định `false`, chạy bước 14–15 trong `REFERENCE.md` trước khi bật. RCON lỗi thì không ai bị kick. |
+| `Whitelist.ExemptSteamIds` | Steam ID không bao giờ bị kick vì thiếu suất chơi: staff chơi không cần launcher. Nên trùng với `WhitelistIDs=` trong `Game.ini` (server không đọc được file đó). |
 | `PublicUrl` | Địa chỉ công khai của server anti-cheat, ví dụ `https://ac.example.com`. Steam và Discord trả trình duyệt về đây sau khi đăng nhập. |
 | `Discord.Required` | `true` (mặc định): người chơi phải đăng nhập Discord, ở trong Discord server và có role được phép. `false` chỉ để thử nghiệm. |
 | `Discord.ClientId` / `ClientSecret` / `BotToken` | Lấy từ Discord application (mục 3). |
@@ -53,6 +55,11 @@ Bắt đầu bằng `observe` để đo tỉ lệ báo nhầm, khi yên tâm th�
   `Whitelist.RconHost`, `RconPort`, `RconPassword`. Server phải bật whitelist trong `Game.ini`.
 - **`file`**: ghi file whitelist (mỗi dòng một Steam ID) tại `Whitelist.FilePath`, ghi kiểu
   nguyên tử để game không đọc phải file dở.
+
+Ở mode `rcon` có thể bật thêm `Whitelist.KickWithoutLease` để kick người đang ở trong game mà không có suất chơi.
+Nên giữ `bServerWhitelist=true` và coi đây là lớp thứ hai. Nếu tắt whitelist của game thì lưới này thành cổng duy nhất:
+ai cũng vào được, người không mở launcher bị kick sau khoảng một phút, và lúc RCON lỗi thì server thành server mở.
+Bảng so sánh hai cách nằm ở mục "Whitelist on or off" trong `REFERENCE.md`.
 
 ## 3. Đăng nhập người chơi: Steam + Discord
 
@@ -144,7 +151,8 @@ Launcher tự tải baseline đúng build khi vào server. Mỗi lần game cậ
    Mất role Discord, rời Discord server hay bị gỡ liên kết → thu hồi ở lần kiểm tra lại kế tiếp (`Discord.RoleRecheckMinutes`).
 
 Gỡ whitelist chắc chắn chặn lần vào **sau**. Người đang ở trong server có bị đá theo không thì chưa kiểm chứng với
-Evrima — bật `Whitelist.KickOnRevoke` để gửi thêm RCON kick (cũng chưa kiểm chứng).
+Evrima — bật `Whitelist.KickOnRevoke` để gửi thêm RCON kick ngay lúc suất chơi kết thúc, hoặc `Whitelist.KickWithoutLease`
+để định kỳ kick ai đang online mà không có suất chơi (cả hai đều chưa kiểm chứng).
 
 | Mã | Cổng | Ý nghĩa | Mã tra cứu |
 |----|------|---------|-----------|

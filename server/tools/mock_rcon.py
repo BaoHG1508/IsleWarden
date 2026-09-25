@@ -13,6 +13,10 @@ Then point the server at it:
   IsleWarden__Whitelist__RconPort=8888
   IsleWarden__Whitelist__RconPassword=secret
   IsleWarden__Whitelist__KickOnRevoke=true   (optional: also send kick 0x30 when a lease ends)
+  IsleWarden__Whitelist__KickWithoutLease=true   (optional: poll playerlist 0x40, kick who has no lease)
+
+With --players 76561198000000001,76561198000000002 the mock answers playerlist with those Steam IDs, so the
+kick-without-lease poller has someone to find.
 """
 
 import argparse
@@ -21,7 +25,8 @@ import sys
 from datetime import datetime
 
 # Only the opcodes this project sends are named; anything else prints as hex so nothing is guessed.
-OPCODES = {0x10: "announce", 0x30: "kick", 0x82: "addwhitelist", 0x83: "removewhitelist"}
+OPCODES = {0x10: "announce", 0x30: "kick", 0x40: "playerlist", 0x82: "addwhitelist", 0x83: "removewhitelist"}
+OP_PLAYER_LIST = 0x40
 
 
 def log(message: str) -> None:
@@ -39,7 +44,7 @@ class Handler(socketserver.BaseRequestHandler):
                     if byte != 0x00:
                         pending.append(byte)
                         continue
-                    reply, is_command = describe(bytes(pending), self.server.password)
+                    reply, is_command = describe(bytes(pending), self.server.password, self.server.players)
                     pending.clear()
                     if not (is_command and self.server.silent):
                         self.request.sendall(reply.encode("utf-8"))
@@ -48,7 +53,7 @@ class Handler(socketserver.BaseRequestHandler):
         log(f"close {peer}")
 
 
-def describe(frame: bytes, expected_password: str | None) -> tuple[str, bool]:
+def describe(frame: bytes, expected_password: str | None, players: list[str]) -> tuple[str, bool]:
     """Prints the frame; returns the reply and whether it was a command."""
     if not frame:
         log("  empty frame")
@@ -61,6 +66,10 @@ def describe(frame: bytes, expected_password: str | None) -> tuple[str, bool]:
     if frame[0] == 0x02 and len(frame) >= 2:
         argument = frame[2:].decode("utf-8", errors="replace")
         log(f'  exec 0x{frame[1]:02x} {OPCODES.get(frame[1], "?"):<16} arg="{argument}"')
+        if frame[1] == OP_PLAYER_LIST:
+            # The layout public RCON libraries describe; the real server's exact reply is unverified.
+            names = ",".join(f"Player{n + 1}" for n in range(len(players)))
+            return f"PlayerList\n{names},\n{','.join(players)},\n", True
         return "Ok", True
     log(f"  unknown   bytes={frame.hex().upper()}")
     return "Unknown", False
@@ -77,6 +86,8 @@ def main() -> int:
     parser.add_argument("--password", help="verify the password the server sends")
     parser.add_argument("--silent", action="store_true",
                         help="don't answer commands, like a quiet game server (the client waits 3 s, then moves on)")
+    parser.add_argument("--players", default="",
+                        help="comma-separated Steam IDs to report as online when asked for the player list")
     args = parser.parse_args()
 
     # UTF-8 output even when Windows redirects it in a legacy code page.
@@ -86,6 +97,7 @@ def main() -> int:
     with Server(("0.0.0.0", args.port), Handler) as server:
         server.password = args.password
         server.silent = args.silent
+        server.players = [p.strip() for p in args.players.split(",") if p.strip()]
         print(f"mock-rcon listening on 0.0.0.0:{args.port}")
         print("  password check: " + ("on" if args.password else "off (pass --password to verify what the server sends)"))
         if args.silent:

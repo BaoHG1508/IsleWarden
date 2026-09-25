@@ -195,6 +195,8 @@ export interface ServerConfig {
   allowBypass: boolean
   whitelistMode: string
   kickOnRevoke: boolean
+  kickWithoutLease: boolean
+  kickGraceSeconds: number
   discordRequired: boolean
   discordGuildId: string | null
   discordRoleIds: string[]

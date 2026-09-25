@@ -33,6 +33,15 @@ class WhitelistSettings:
     # Also send RCON kick (0x30) when a player's last lease ends. The opcode is unverified against a real
     # server, and whether whitelist removal alone drops a player already in the game is unknown.
     kick_on_revoke: bool = False
+    # rcon mode only: poll the game server's player list (playerlist 0x40) and kick (0x30) every Steam ID that
+    # is online without an active lease. A safety net on top of the whitelist, and the only gate if the game runs
+    # with bServerWhitelist=false. Both opcodes are unverified against a real server.
+    kick_without_lease: bool = False
+    kick_poll_seconds: int = 20
+    # How long a player may be online without a lease before the kick: time to start the launcher.
+    kick_grace_seconds: int = 60
+    # Never kicked for having no lease: staff who play without the launcher. Keep in step with WhitelistIDs=.
+    exempt_steam_ids: list[str] = field(default_factory=list)
 
     @property
     def is_rcon(self) -> bool:

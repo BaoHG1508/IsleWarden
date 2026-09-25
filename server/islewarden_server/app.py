@@ -22,6 +22,7 @@ from .crypto import Crypto
 from .dashboard import DashboardStore, ReportFilter
 from .db import Database
 from .discord import DiscordNotifier
+from .enforcer import LeaseEnforcer
 from .enums import DeviceStatus, SessionState
 from .login.discord_api import USER_AGENT as DISCORD_USER_AGENT
 from .login.discord_api import DiscordApi
@@ -64,6 +65,7 @@ class Services:
     logins: LoginService
     dashboard: DashboardStore
     sweeper: SessionSweeper
+    enforcer: LeaseEnforcer
 
 
 def build_services(settings: Settings, *, steam_http: Http | None = None,
@@ -82,7 +84,8 @@ def build_services(settings: Settings, *, steam_http: Http | None = None,
     logins = LoginService(PendingLogins(), SteamOpenId(steam_http or UrllibHttp()), discord_api, discord_gate,
                           sessions, store)
     return Services(settings, database, store, policies, whitelist, discord, sessions, logins,
-                    DashboardStore(database, RiskScorer(settings.risk)), SessionSweeper(settings, store, sessions))
+                    DashboardStore(database, RiskScorer(settings.risk)), SessionSweeper(settings, store, sessions),
+                    LeaseEnforcer(settings, store, discord))
 
 
 def create_app(settings: Settings, *, web_root: Path | None = STATIC_DIR, steam_http: Http | None = None,
@@ -93,7 +96,9 @@ def create_app(settings: Settings, *, web_root: Path | None = STATIC_DIR, steam_
     @asynccontextmanager
     async def lifespan(_: FastAPI):
         services.sweeper.start()
+        services.enforcer.start()
         yield
+        services.enforcer.stop()
         services.sweeper.stop()
 
     app = FastAPI(title="IsleWarden.Server", version=__version__, lifespan=lifespan,
@@ -345,6 +350,8 @@ def admin_api(s: Services) -> APIRouter:
             "allowBypass": s.settings.allow_anti_cheat_bypass,
             "whitelistMode": s.settings.whitelist.mode,
             "kickOnRevoke": s.settings.whitelist.kick_on_revoke,
+            "kickWithoutLease": s.enforcer.enabled,
+            "kickGraceSeconds": s.settings.whitelist.kick_grace_seconds,
             "discordRequired": s.settings.discord.required,
             "discordGuildId": s.settings.discord.guild_id,
             "discordRoleIds": s.settings.discord.required_role_ids,
@@ -588,3 +595,13 @@ def _warn_if_misconfigured(settings: Settings) -> None:
         else:
             log.warning("Whitelist:KickOnRevoke=true: dùng RCON kick (0x30) — opcode CHƯA kiểm chứng với server "
                         "thật, xem docs/TEST-WITH-REAL-SERVER.md.")
+    whitelist = settings.whitelist
+    if whitelist.kick_without_lease:
+        if not whitelist.is_rcon or not whitelist.rcon_host or not whitelist.rcon_host.strip():
+            log.warning("Whitelist:KickWithoutLease cần Whitelist:Mode=rcon và RconHost — đang bị bỏ qua.")
+        else:
+            log.warning("Whitelist:KickWithoutLease=true: đọc người chơi online bằng RCON playerlist (0x40) và kick "
+                        "(0x30) ai không có suất chơi sau %ss — cả hai opcode CHƯA kiểm chứng với server thật. Nếu "
+                        "RCON lỗi thì không ai bị kick.", whitelist.kick_grace_seconds)
+            log.warning("Nhân sự vào bằng WhitelistIDs= trong Game.ini mà không mở launcher sẽ bị kick, trừ khi có "
+                        "trong Whitelist:ExemptSteamIds (hiện có %d Steam ID).", len(whitelist.exempt_steam_ids))

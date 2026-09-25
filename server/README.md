@@ -128,7 +128,8 @@ Nothing else changes: launchers keep their device keys and leases, bans and hard
 
 The suite ports every test of the C# server's test project and adds HTTP-level tests of the JSON shapes
 the launcher and the dashboard rely on. `tests/fake_rcon.py` speaks EVRIMA's binary RCON protocol, so the
-exact bytes sent to the game server are checked. `FakeLoginServices` in `tests/helpers.py` stands in for
+exact bytes sent to the game server are checked; it can also answer `playerlist` with a reply split over
+several packets, for the kick safety net in `tests/test_enforcer.py`. `FakeLoginServices` in `tests/helpers.py` stands in for
 Steam and the Discord API, so the whole login runs offline.
 
 To watch RCON traffic by hand, run the mock server and point the whitelist bridge at it:
@@ -144,6 +145,10 @@ export IsleWarden__Whitelist__RconPort=8888
 export IsleWarden__Whitelist__RconPassword=secret
 ```
 
+For the kick safety net, add `--players 76561198000000002` to the mock (it then reports that Steam ID as
+online) and `export IsleWarden__Whitelist__KickWithoutLease=true` to the server. The mock prints a
+`playerlist` frame every 20 s, and a `kick` for that Steam ID once `KickGraceSeconds` has passed.
+
 ## Layout
 
 | Module | Role (C# counterpart) |
@@ -154,6 +159,7 @@ export IsleWarden__Whitelist__RconPassword=secret
 | `access.py` | Gates, stable block codes and the wording players see (`AccessBlocks`, `Protocol/Access.cs`) |
 | `store.py`, `dashboard.py`, `db.py` | Data access, dashboard queries, schema and migrations (`Data/*`) |
 | `whitelist.py`, `rcon.py` | Whitelist sync in none/rcon/file mode, EVRIMA RCON client |
+| `enforcer.py` | Optional kick safety net (`Whitelist.KickWithoutLease`): reads `playerlist` over RCON and kicks Steam IDs online without an active lease. New in this port, no C# counterpart |
 | `policy.py` | Policy reload and baselines (`PolicyProvider`) |
 | `risk.py` | Risk score for the review queue (`RiskScorer`) |
 | `sweeper.py` | Expires leases whose heartbeats stopped (`SessionSweeper`) |

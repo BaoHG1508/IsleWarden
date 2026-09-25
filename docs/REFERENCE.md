@@ -76,12 +76,27 @@ sequenceDiagram
    ends, their Steam ID is removed from the whitelist.
 
 IsleWarden never modifies, closes or deletes anything on a player's PC. The only consequence of
-failing a check is not getting on the whitelist, or being taken off it.
+failing a check is not getting on the whitelist, being taken off it, or being kicked from the game.
+
+**Kick safety net (optional).** With `Whitelist.KickWithoutLease=true`, the server also reads the
+game server's player list over RCON every `KickPollSeconds` (default 20 s) and kicks every Steam ID
+that is online without an active lease:
+
+- a player who has no lease, after `KickGraceSeconds` (default 60 s), which leaves time to start the
+  launcher;
+- a banned player at once, with the ban's wording;
+- a player kicked in the last 10 minutes who came back without a lease at once;
+- never a Steam ID in `ExemptSteamIds` (staff who play without the launcher).
+
+This covers players whose lease ended while they were in the game, and it's the only gate if the game
+server runs with `bServerWhitelist=false` (see [Whitelist on or off](#whitelist-on-or-off)). It fails
+open: when the player list can't be read, nobody is kicked, and after three failed reads admins get a
+Discord alert. Both RCON commands it uses, `playerlist` and `kick`, are unverified on a real server.
 
 > [!NOTE]
 > Removing a Steam ID from the whitelist reliably blocks the player's *next* join. It hasn't been
 > verified whether EVRIMA also disconnects a player who is already in the server. See `KickOnRevoke`
-> under [Server settings](#server-settings).
+> and `KickWithoutLease` under [Server settings](#server-settings).
 
 ### Access gates
 
@@ -287,6 +302,7 @@ it. Its modules, in `server/islewarden_server/`:
 | `sessions.py` | Device records, the access gates, and granting, renewing, releasing, revoking and expiring leases |
 | `sweeper.py` | Background thread. Every `HeartbeatSeconds / 2` it expires leases whose last heartbeat is older than the grace period. |
 | `whitelist.py` + `rcon.py` | Mirrors the `whitelist` table to the game server in `none`, `rcon` or `file` mode. Game-server errors are logged and never block granting or revoking a lease. |
+| `enforcer.py` | Optional background thread (`KickWithoutLease`). Every `KickPollSeconds` it reads the game's player list over RCON and kicks Steam IDs that are online without an active lease. If the list can't be read, it kicks nobody. |
 | `policy.py` | Serves `server-policy.json` and reloads it when the file changes, keeping the last good version if the new one doesn't parse. Also serves baselines by build ID. |
 | `discord.py` | Webhook alerts for findings at or above `Discord.MinSeverity`, joins blocked by a ban, revoked leases, lost heartbeats and new devices that need review |
 | `dashboard.py` + `risk.py` | Dashboard queries and the per-player risk score |
@@ -342,6 +358,10 @@ environment variable: `IsleWarden__AdminKey`, `IsleWarden__Whitelist__Mode`, and
 | `Whitelist.RconHost`, `RconPort`, `RconPassword` | none, `8888`, none | EVRIMA RCON connection for `rcon` mode |
 | `Whitelist.FilePath` | none | Output for `file` mode: one Steam ID per line, written atomically |
 | `Whitelist.KickOnRevoke` | `false` | In `rcon` mode, also send the RCON `kick` command (`0x30`) when a player's last lease ends. This opcode hasn't been verified against a real server; test it before enabling. |
+| `Whitelist.KickWithoutLease` | `false` | In `rcon` mode, run the [kick safety net](#how-it-works): read who is online with RCON `playerlist` (`0x40`) and `kick` (`0x30`) anyone without an active lease. Both opcodes are unverified against a real server; run test steps 14–15 before enabling. |
+| `Whitelist.KickPollSeconds` | `20` | How often the player list is read (at least 5 s) |
+| `Whitelist.KickGraceSeconds` | `60` | How long a player may be online without a lease before the kick: time to start the launcher |
+| `Whitelist.ExemptSteamIds` | empty | Steam IDs never kicked for having no lease: staff who play without the launcher. Keep it in step with `WhitelistIDs=` in `Game.ini`, which IsleWarden can't read. As environment variables: `IsleWarden__Whitelist__ExemptSteamIds__0`, `__1`, ... |
 | `Discord.Required` | `true` | Players must sign in with a Discord account that is in `GuildId` and holds one of `RequiredRoleIds`. `false` = Steam-only login with no role check, for local testing only. |
 | `Discord.ClientId`, `ClientSecret` | none | OAuth2 credentials of your Discord application |
 | `Discord.BotToken` | none | Token of the same application's bot. The bot must be in your Discord server; it needs no permissions. |
@@ -519,7 +539,9 @@ WhitelistIDs=<admin and staff SteamID64s>
 - EVRIMA uses its own binary RCON protocol. Authentication is `0x01 + password + 0x00`; a command is
   `0x02 + opcode + argument + 0x00`; multiple arguments are separated by commas.
 - IsleWarden uses `addwhitelist` (`0x82`), `removewhitelist` (`0x83`), `announce` (`0x10`), and
-  optionally `kick` (`0x30`, unverified). These opcodes come from public EVRIMA RCON libraries.
+  optionally `kick` (`0x30`) and `playerlist` (`0x40`), both unverified. These opcodes come from
+  public EVRIMA RCON libraries. The layout of the `playerlist` reply isn't documented, so IsleWarden
+  reads every SteamID64 out of it instead of relying on separators.
 - **A whitelist pushed over RCON exists only in the game server's memory.** It is lost when the
   game server restarts or reloads its config, and no RCON command can read it back. Put admin and
   staff Steam IDs in `WhitelistIDs=` in `Game.ini` so they can always get in, even if RCON breaks.
@@ -531,6 +553,23 @@ WhitelistIDs=<admin and staff SteamID64s>
   it.
 - `file` mode writes a plain list of Steam IDs. EVRIMA itself doesn't read a separate whitelist
   file, so this mode is for testing or for your own tooling.
+
+### Whitelist on or off
+
+The whitelist and the [kick safety net](#how-it-works) (`KickWithoutLease`) combine in two ways:
+
+| | `bServerWhitelist=true` (recommended) | `bServerWhitelist=false` |
+|---|---|---|
+| Who can connect | Lease holders, plus `WhitelistIDs=` | Anyone |
+| A player without the launcher | Can't connect | Kicked about `KickGraceSeconds` after joining |
+| Server full | Free slots only go to lease holders | A player without a lease can hold a slot for about a minute |
+| Game-server restart | The RCON whitelist is lost: lease holders must reopen the launcher | Nothing is lost; players just reconnect |
+| RCON down | Nobody new can join; players already in keep playing | Nobody is kicked: the server is open, with no anti-cheat, until RCON is back |
+| `KickWithoutLease` | Optional: catches players whose lease ended while they were in | Required: it's the only gate |
+
+Keep `bServerWhitelist=true` unless restarts hurt more than the open minute and the fail-open risk.
+Either way, put staff who play without the launcher in both `WhitelistIDs=` and `ExemptSteamIds`, or
+the safety net will kick them.
 
 ## Deploying
 
@@ -786,10 +825,15 @@ dashboard queries, risk scoring and the JSON shapes the launcher and the dashboa
 - multi-value arguments keep their commas;
 - a game server that never replies still counts as "sent";
 - when RCON is unreachable, a clean player still gets a lease and the `whitelist` table stays
-  correct; only an error is logged.
+  correct; only an error is logged;
+- a `playerlist` reply split over several packets is read whole.
 
-That last case matters most: a game server that is down or on the wrong port must never break
-access for everyone.
+`test_enforcer.py` covers the kick safety net against a fake player list and a controllable clock:
+the grace period, lease holders and exempt staff left alone, banned players kicked at once, no second
+grace for a player who rejoins, and nobody kicked when RCON fails or the reply holds no Steam IDs.
+
+The cases about failures matter most: a game server that is down or on the wrong port must never
+break access for everyone.
 
 **Watching RCON traffic by hand.** Start the mock RCON server in one terminal:
 
@@ -813,6 +857,11 @@ Each time a lease is granted or ends, the mock prints the decoded frames, for ex
 `exec 0x82 addwhitelist arg="76561198000000001"`. A wrong password shows up as `MISMATCH`. Add
 `--silent` to make the mock accept commands without replying, like a quiet game server.
 
+To watch the kick safety net, start the mock with `--players 76561198000000002` so it reports that
+Steam ID as online, and add `$env:IsleWarden__Whitelist__KickWithoutLease = "true"` to the server's
+window. Every 20 s the mock prints `exec 0x40 playerlist`. A minute later it prints
+`exec 0x30 kick arg="76561198000000002,..."`, because that player holds no lease.
+
 ### Level 2: a real EVRIMA server
 
 Set up the game server as in [Connecting to an EVRIMA server](#connecting-to-an-evrima-server), keep
@@ -833,10 +882,12 @@ the policy in `observe`, and walk through this:
 | 11 | While playing, kill the launcher in Task Manager and run `play` again within 75 s | The launcher says it resumed the lease; the player isn't dropped and no `game-started-before-launcher` finding appears |
 | 12 | Grant an anti-cheat bypass to a Steam ID, run a blocked tool, then `play` in `enforce` mode | The player gets in and the launcher shows the anti-cheat gate as bypassed; the report is still stored, and the Discord alert notes the bypass |
 | 13 | While playing, remove the play role in Discord | Within `RoleRecheckMinutes` the lease ends with `discord-role-missing`; `login` and `play` are refused until the role is back |
+| 14 | Set `KickWithoutLease=true`. Join without the launcher, using a Steam ID in `WhitelistIDs=` but not in `ExemptSteamIds` (or run the game server with `bServerWhitelist=false`) | The server log shows `playerlist` finding you, and about `KickGraceSeconds` later you are kicked. If the log says `playerlist` has no Steam IDs, the reply layout differs from what the libraries describe: record the reply it prints. |
+| 15 | With `KickWithoutLease=true`, break RCON (wrong password or port) and play without the launcher | Nobody is kicked, and after three failed reads the Discord channel gets the "không kick được" alert |
 
 Step 7 is the easiest to skip and the likeliest to cause a real outage. Steps 8 and 9 settle the open
 question from [How it works](#how-it-works): whether removing a player from the whitelist also
-disconnects them.
+disconnects them. Steps 14 and 15 decide whether the kick safety net can be turned on.
 
 **Common problems:**
 
@@ -847,6 +898,9 @@ disconnects them.
 | `AdminsSteamIDs` / `WhitelistIDs` / `VIPs` have no effect | They're under `TIGameSession` instead of `TIGameStateBase` |
 | `Game.ini` edits disappear after a restart | They were made while the server was running |
 | Players can't rejoin after a game-server restart | The RCON whitelist lives only in memory; they must close and reopen the launcher |
+| With `KickWithoutLease`, staff get kicked | Their Steam IDs aren't in `ExemptSteamIds` |
+| With `KickWithoutLease`, players with the launcher open get kicked | Their launcher didn't get a lease (its output shows which gate blocked), or they joined more than `KickGraceSeconds` before the lease was granted |
+| With `KickWithoutLease`, nobody ever gets kicked | `Whitelist.Mode` isn't `rcon`, RCON fails (look for the Discord alert), or the `playerlist` reply has no SteamID64s (the server log prints the reply) |
 | The game server doesn't start | The `[EpicOnlineServices]` block is missing from `Engine.ini`. Keep the one that ships with the server files. |
 | Clients can't find the server | Installed without `-beta evrima`, or 7777/UDP isn't open |
 
@@ -932,10 +986,12 @@ through a Discord ticket.
   bans for hardware matches.
 - **Heuristics produce false positives.** Keyword matches and "tool found on disk" are signals for a
   human, not proof. That's why they default to `low` or `medium`.
-- **Whitelist removal is not a guaranteed kick.** It blocks the next join; `KickOnRevoke` is
-  unverified.
+- **Whitelist removal is not a guaranteed kick.** It blocks the next join. `KickOnRevoke` and the
+  kick safety net (`KickWithoutLease`) are there to kick, but their RCON commands are unverified.
+- **The kick safety net fails open.** If RCON breaks, or the `playerlist` reply has no SteamID64s,
+  nobody is kicked. With `bServerWhitelist=false` that leaves the server open until it's fixed.
 - **An RCON whitelist doesn't survive a game-server restart.** See
-  [Connecting to an EVRIMA server](#connecting-to-an-evrima-server).
+  [Whitelist on or off](#whitelist-on-or-off).
 - **The UI text is Vietnamese only.**
 
 ## Roadmap

@@ -45,7 +45,8 @@ and gives your admins a web dashboard to review reports and issue bans.
   the Discord role you choose can play: give the role to let someone in, remove it to stop them.
 - **The game's own whitelist, kept in sync.** With `bServerWhitelist=true`, EVRIMA only lets Steam
   IDs on its whitelist connect. IsleWarden adds a player over RCON while their launcher runs and
-  checks in every 30 seconds, and removes them when it stops.
+  checks in every 30 seconds, and removes them when it stops. An optional safety net reads who is
+  online and kicks anyone in the game without a lease.
 - **User-mode scanners.** Blocked processes and DLLs, game files checked against a baseline for each
   game build, known cheat-tool files by name, launch order, windows drawn over the game (ESP
   overlays), and optionally Windows' execution history.
@@ -180,7 +181,9 @@ server, `npm` for the dashboard. The launcher and the server share no code, only
 - **The launcher can be imitated,** and nothing ties the game to the launcher's PC yet. Fixes for
   both are on the roadmap.
 - **Removing a player from the whitelist blocks their next join;** whether it also kicks them hasn't
-  been verified. A whitelist pushed over RCON is also lost when the game server restarts.
+  been verified. The kick safety net uses RCON commands (`playerlist`, `kick`) that are unverified
+  too, and if RCON breaks it kicks nobody. A whitelist pushed over RCON is lost when the game server
+  restarts.
 - **Heuristics produce false positives.** Start in `observe` mode and tune before you enforce.
 - **The UI text is Vietnamese only.**
 

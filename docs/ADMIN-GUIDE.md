@@ -28,8 +28,11 @@ A player gets in like this:
    75 s, when they lose the role, get banned or (in `enforce` mode) trip the scanner, the lease ends
    and their Steam ID leaves the whitelist.
 
-**The game whitelist is the only enforcement.** With `bServerWhitelist=true`, EVRIMA refuses anyone
+**The game whitelist is the main enforcement.** With `bServerWhitelist=true`, EVRIMA refuses anyone
 who isn't on it. IsleWarden never touches the player's PC; it only decides who stays on the list.
+The optional kick safety net (`Whitelist.KickWithoutLease`) adds a second layer. It reads who is
+online over RCON and kicks anyone in the game without a lease, such as a player whose lease ended
+while they were playing.
 
 ## 2. Setup checklist
 
@@ -37,14 +40,14 @@ Do these in order. Each item links to the details.
 
 | # | Task | Details |
 |---|---|---|
-| 1 | Set up `Game.ini`: `bServerWhitelist=true` and RCON on, in the **right sections** (a key in the wrong one is silently ignored). Put staff Steam IDs in `WhitelistIDs=` so they can always get in. Firewall the RCON port. | Reference → [Connecting to an EVRIMA server](REFERENCE.md#connecting-to-an-evrima-server) |
+| 1 | Set up `Game.ini`: `bServerWhitelist=true` and RCON on, in the **right sections** (a key in the wrong one is silently ignored). Put staff Steam IDs in `WhitelistIDs=` so they can always get in (and in `ExemptSteamIds` if you turn on the kick safety net). Firewall the RCON port. | Reference → [Connecting to an EVRIMA server](REFERENCE.md#connecting-to-an-evrima-server) |
 | 2 | Create the Discord application, invite its bot, copy the server ID and the play role's ID. | Reference → [Set up Discord login](REFERENCE.md#set-up-discord-login) |
 | 3 | Set the server settings, with secrets in environment variables: `PublicUrl`, `AdminKey`, `FingerprintPepper`, `Whitelist.*` (mode `rcon`), `Discord.*`. | Reference → [Server settings](REFERENCE.md#server-settings) |
 | 4 | Put the server behind HTTPS. Restrict `/admin/` and `/api/admin/` to admin IPs or behind extra auth. | Reference → [Run the server](REFERENCE.md#run-the-server) |
 | 5 | Edit `server-policy.json`: keep `mode: "observe"`, write the `disclosure` for *your* players and in their language, choose the blocked tools. | Reference → [Policy](REFERENCE.md#policy) |
 | 6 | Build a release with `build-release.ps1` and code-sign the launcher. | Reference → [Build a release](REFERENCE.md#build-a-release) |
 | 7 | Upload a baseline for the current game build. Repeat after every EVRIMA update. | Reference → [Baselines](REFERENCE.md#baselines-for-each-game-build) |
-| 8 | Run the 13-step real-server test before inviting players. Steps 7, 8, 9 and 13 matter most. | Reference → [Testing, level 2](REFERENCE.md#level-2-a-real-evrima-server) |
+| 8 | Run the 15-step real-server test before inviting players. Steps 7, 8, 9, 13 and 14 matter most. | Reference → [Testing, level 2](REFERENCE.md#level-2-a-real-evrima-server) |
 
 ## 3. Decisions you have to make
 
@@ -55,6 +58,8 @@ Do these in order. Each item links to the details.
 | `EnforceThreshold` | `High` | Keyword and "tool on disk" heuristics are `low`/`medium` on purpose; they are hints, not proof. |
 | `AutoApproveDevices` | `true` for a small server | Risky devices (shared hardware with another or banned account, no fingerprint) still wait for review. |
 | `Whitelist.KickOnRevoke` | `false` until test steps 8–9 pass | The RCON kick opcode (`0x30`) is not verified on a real server. |
+| `Whitelist.KickWithoutLease` | `false` until test steps 14–15 pass, then `true` with `bServerWhitelist=true` kept on | It kicks whoever the whitelist lets slip through, but `playerlist` (`0x40`) and `kick` (`0x30`) are unverified, and it kicks nobody while RCON is broken. Turning the game whitelist off instead trades that for an open server whenever RCON fails; see [Whitelist on or off](REFERENCE.md#whitelist-on-or-off). |
+| `Whitelist.ExemptSteamIds` | The same Steam IDs as `WhitelistIDs=` in `Game.ini` | Staff who play without the launcher are kicked by the safety net unless they're listed. IsleWarden can't read `Game.ini`. |
 | `FingerprintPepper` | Long random value, set once | Changing it later silently breaks every hardware ban. |
 | `executionHistory` in the policy | Off at first | Needs admin rights on the player's PC and must be in the disclosure. |
 | `overlayScan` in the policy | On, at `medium`, with the example allowlist | During `observe`, check `foreign-overlay` on the dashboard and add legitimate overlays your players use to `allowedProcesses`. |
@@ -72,6 +77,7 @@ paths below are relative to it unless they start with `launcher/` or `dashboard/
 | Steam + Discord login | `login/service.py` (flow), `login/steam.py`, `login/discord_api.py`, the `/login/*` routes in `app.py`; protocol and its security notes in `launcher/IsleWarden.Core/Protocol/Login.cs`; launcher side in `launcher/IsleWarden.Agent/LoginCommand.cs` and `LoopbackListener.cs` |
 | The Discord role check | `login/discord_gate.py` |
 | Whitelist sync and RCON | `whitelist.py`, `rcon.py` |
+| Kicking players who are in the game without a lease | `enforcer.py` |
 | Lease expiry after lost heartbeats | `sweeper.py` |
 | What the launcher scans | `launcher/IsleWarden.Core/Scanner.cs` (runs everything), `Policy.cs` (the policy schema), one file per scanner |
 | Launcher commands | `launcher/IsleWarden.Agent/*Command.cs` |
@@ -103,9 +109,9 @@ These are deliberate. If you change the code, keep them:
 
 1. **Secrets are stored only as hashes.** That covers device keys and lease tokens. Hardware
    identifiers are HMAC'd with `FingerprintPepper`; raw serials are never written to disk.
-2. **An outage of RCON or Discord never locks everyone out.** RCON down: leases are still granted
-   and the error is logged. Discord down: the last known role result is used. A game server on the
-   wrong port must not become a server-wide outage.
+2. **An outage of RCON or Discord never locks everyone out.** RCON down: leases are still granted,
+   the error is logged, and the kick safety net kicks nobody. Discord down: the last known role
+   result is used. A game server on the wrong port must not become a server-wide outage.
 3. **Released codes never change.** `AccessCodes`, `FindingCodes` and `LoginCodes` values are read by
    the launcher, the dashboard and stored data. Add new ones; never rename.
 4. **Privacy.** The process inventory sends names only (no paths, command lines or window titles).
@@ -128,9 +134,11 @@ Be honest with your community about these:
 
 - **RCON:** the opcodes come from public EVRIMA libraries and are tested against a byte-accurate
   mock, not a live server. It's unknown whether removing someone from the whitelist disconnects a
-  player who is already in. The optional kick (`0x30`) is unverified too. Test steps 8–9 answer both.
+  player who is already in. The optional `kick` (`0x30`) and `playerlist` (`0x40`) are unverified
+  too, and so is the layout of the player list. Test steps 8–9 and 14–15 answer all three.
 - **The RCON whitelist lives only in the game server's memory.** After a game-server restart, players
-  must close and reopen the launcher to get back on.
+  must close and reopen the launcher to get back on. Running with `bServerWhitelist=false` and the
+  kick safety net avoids this, but the server is then open whenever RCON breaks.
 - **Steam and Discord login** are tested against fakes of both services. Do one real login with your
   own Discord application before inviting players.
 - **Nothing ties the game to the launcher's PC yet.** A clean PC could hold the lease while the same

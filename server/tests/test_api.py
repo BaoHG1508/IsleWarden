@@ -292,6 +292,18 @@ def test_config_keeps_the_names_the_dashboard_shows(client):
     assert "blocked-process" in config["codes"]
     assert (config["discordRequired"], config["discordGuildId"], config["discordRoleIds"],
             config["discordRecheckMinutes"]) == (False, "guild-1", [PLAY_ROLE], 10)
+    assert (config["kickOnRevoke"], config["kickWithoutLease"], config["kickGraceSeconds"]) == (False, False, 60)
+
+
+def test_config_says_when_the_kick_safety_net_is_running(tmp_path):
+    settings = make_settings(tmp_path)
+    settings.whitelist.mode, settings.whitelist.rcon_host = "rcon", "127.0.0.1"
+    settings.whitelist.kick_without_lease = True
+
+    with make_client(settings) as test_client:
+        config = test_client.get("/api/admin/config", headers=ADMIN).json()
+
+    assert config["kickWithoutLease"] is True
 
 
 def test_device_review(client):

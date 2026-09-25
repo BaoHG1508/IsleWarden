@@ -39,6 +39,8 @@ export function Maintenance() {
     ['Miễn trừ anti-cheat', config.allowBypass ? 'đang bật' : 'đang tắt toàn server'],
     ['Đồng bộ whitelist', config.whitelistMode],
     ['Kick khi hết suất chơi (RCON 0x30)', config.kickOnRevoke ? 'bật — chưa kiểm chứng' : 'tắt'],
+    ['Kick người trong game không có suất chơi (RCON 0x40 + 0x30)',
+      config.kickWithoutLease ? `bật — sau ${config.kickGraceSeconds} giây, chưa kiểm chứng` : 'tắt'],
     ['Cửa sổ chấm rủi ro', `${config.risk.windowDays} ngày, bán rã ${config.risk.halfLifeDays} ngày`],
   ]
 

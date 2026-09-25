@@ -100,7 +100,8 @@ chia làm hai tầng bổ sung cho nhau:
 4. Nếu phát hiện vi phạm (hoặc mất heartbeat), server **gỡ khỏi whitelist** →
    game server không cho vào lại. Không có hành động nào tác động vào máy người chơi.
    *(Gỡ whitelist có đá người **đang** ở trong server hay không thì chưa kiểm chứng với Evrima; tuỳ chọn
-   `Whitelist:KickOnRevoke` gửi thêm RCON kick — xem `ACCESS-CONTROL-REFERENCE.md` §6.7.)*
+   `Whitelist:KickOnRevoke` gửi thêm RCON kick, còn `Whitelist:KickWithoutLease` định kỳ kick ai đang online mà
+   không có suất chơi — xem `SERVER-SETUP.md` mục 2.)*
 5. Mỗi lý do chặn là một cổng riêng có mã riêng (thiết bị, ban, thông báo, anti-cheat, suất chơi) — chi tiết ở
    `SERVER-SETUP.md` mục 7.
 
